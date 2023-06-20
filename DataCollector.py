@@ -26,7 +26,7 @@ db = mongoClient["bot_fx"]
 
 
 def collect(pair, fromTime, toTime):
-    collection = db["eurusd"]
+    collection = db[pair]
     configs = db["configs"]
     # enter your login credentials here
     userId = os.getenv("XTB_USER_ID")
@@ -62,13 +62,15 @@ def collect(pair, fromTime, toTime):
     if res["status"] == True:
         df = pd.DataFrame(res["returnData"]["rateInfos"])
         digits = res["returnData"]["digits"]
-        # configs.insert_one({"paid": pair, "digits": digits})
+        configs.replace_one(
+            {"paid": pair}, {"paid": pair, "digits": digits}, upsert=True
+        )
         # df["timestamp"]
         del df["ctmString"]
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
         print(df)
-        # records = df.to_dict("records")
-        # collection.insert_many(records)
+        records = df.to_dict("records")
+        collection.insert_many(records)
 
 
 def main():
