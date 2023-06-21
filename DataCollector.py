@@ -47,20 +47,13 @@ def collect(pair, fromTime):
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
         print(df)
         records = df.to_dict("records")
+        configs.update_one(
+            {"pair": pair},
+            {"$set": records[-1]},
+        )
         records.pop()
         collection.delete_many({})
         collection.insert_many(records)
-        configs.update_one(
-            {"pair": pair},
-            {
-                "$set": {
-                    "last_fetch": records[-1]["ctm"],
-                    "last_fetch_date": datetime.utcfromtimestamp(
-                        records[-1]["ctm"] / 1000
-                    ),
-                }
-            },
-        )
 
 
 def main():

@@ -52,9 +52,7 @@ def collect(
         {
             "info": {
                 "period": timeframe,
-                "start": config["last_fetch"]
-                if "last_fetch" in config
-                else (current_time - time_to_subtract).timestamp() * 1000,
+                "start": config["ctm"],
                 "symbol": pair.upper(),
             }
         },
@@ -70,25 +68,16 @@ def collect(
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
 
         records = df.to_dict("records")
-        records.pop()
-        trim_record = list(filter(lambda x: x["ctm"] > config["last_fetch"], records))
-
-        if len(trim_record) > 0:
-            logging.info(
-                f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
-            )
+        print(df)
+        if len(records) > 0:
             configs.update_one(
                 {"pair": pair},
-                {
-                    "$set": {
-                        "last_fetch": records[-1]["ctm"],
-                        "last_fetch_date": datetime.utcfromtimestamp(
-                            records[-1]["ctm"] / 1000
-                        ),
-                    }
-                },
+                {"$set": records[0]},
             )
-            histories.insert_many(trim_record)
+            records.pop(0)
+        if len(records) > 0:
+            logging.info(f"cronjob get {len(records)} {pair} candles")
+            histories.insert_many(records)
 
 
 def main():
