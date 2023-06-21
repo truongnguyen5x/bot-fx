@@ -3,7 +3,8 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 from pymongo import MongoClient
-
+import logging
+import os
 from xAPIConnector import APIClient, loginCommand
 
 load_dotenv()
@@ -12,6 +13,23 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 list_pair = ("eurusd", "gbpusd")
+# Configure logging
+# Set the log file path
+log_file = os.path.join(os.getcwd(), "logfile.txt")
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Create a FileHandler and set its properties
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.DEBUG)
+
+# Create a Formatter and set its properties
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+file_handler.setFormatter(formatter)
+
+# Add the FileHandler to the logger
+logger.addHandler(file_handler)
 
 
 def collect(
@@ -63,16 +81,22 @@ def collect(
                 }
             },
         )
+
         print(df)
         if "last_fetch" in config:
             trim_record = [num for num in records if num["ctm"] > config["last_fetch"]]
             if len(trim_record) > 0:
+                logging.info(
+                    f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
+                )
                 histories.insert_many(trim_record)
         else:
             histories.insert_many(records)
 
 
 def main():
+    # Usage example
+
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
     client = APIClient()

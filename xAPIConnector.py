@@ -108,7 +108,7 @@ class JsonSocket(object):
                     break
             except ValueError as e:
                 continue
-        logger.info("Received: " + str(resp))
+        # logger.info("Received: " + str(resp))
         return resp
 
     def _readObj(self):
@@ -231,7 +231,7 @@ class APIStreamClient(JsonSocket):
     def _readStream(self):
         while self._running:
             msg = self._readObj()
-            logger.info("Stream received: " + str(msg))
+            # logger.info("Stream received: " + str(msg))
             if msg["command"] == "tickPrices":
                 self._tickFun(msg)
             elif msg["command"] == "trade":
