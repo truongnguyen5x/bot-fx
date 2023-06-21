@@ -72,9 +72,9 @@ def collect(
         if len(records) > 0:
             configs.update_one(
                 {"pair": pair},
-                {"$set": records[0]},
+                {"$set": records[-1]},
             )
-            records.pop(0)
+            records.pop()
         if len(records) > 0:
             logging.info(f"cronjob get {len(records)} {pair} candles")
             histories.insert_many(records)
