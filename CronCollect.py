@@ -51,7 +51,7 @@ def collect(
         "getChartLastRequest",
         {
             "info": {
-                "period": 5,
+                "period": timeframe,
                 "start": config["last_fetch"]
                 if "last_fetch" in config
                 else (current_time - time_to_subtract).timestamp() * 1000,
