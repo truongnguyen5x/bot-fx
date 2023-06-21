@@ -47,6 +47,7 @@ def collect(pair, fromTime):
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
         print(df)
         records = df.to_dict("records")
+        records.pop()
         collection.delete_many({})
         collection.insert_many(records)
         configs.update_one(

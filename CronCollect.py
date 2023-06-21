@@ -70,28 +70,31 @@ def collect(
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
 
         records = df.to_dict("records")
-        configs.update_one(
-            {"pair": pair},
-            {
-                "$set": {
-                    "last_fetch": records[-1]["ctm"],
-                    "last_fetch_date": datetime.utcfromtimestamp(
-                        records[-1]["ctm"] / 1000
-                    ),
-                }
-            },
-        )
-
-        print(df)
-        if "last_fetch" in config:
-            trim_record = [num for num in records if num["ctm"] > config["last_fetch"]]
-            if len(trim_record) > 0:
-                logging.info(
-                    f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
-                )
-                histories.insert_many(trim_record)
-        else:
-            histories.insert_many(records)
+        records.pop()
+        if len(records) > 0:
+            configs.update_one(
+                {"pair": pair},
+                {
+                    "$set": {
+                        "last_fetch": records[-1]["ctm"],
+                        "last_fetch_date": datetime.utcfromtimestamp(
+                            records[-1]["ctm"] / 1000
+                        ),
+                    }
+                },
+            )
+            print(df)
+            if "last_fetch" in config:
+                trim_record = [
+                    num for num in records if num["ctm"] > config["last_fetch"]
+                ]
+                if len(trim_record) > 0:
+                    logging.info(
+                        f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
+                    )
+                    histories.insert_many(trim_record)
+            else:
+                histories.insert_many(records)
 
 
 def main():
