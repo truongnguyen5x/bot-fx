@@ -71,7 +71,12 @@ def collect(
 
         records = df.to_dict("records")
         records.pop()
-        if len(records) > 0:
+        trim_record = list(filter(lambda x: x["ctm"] > config["last_fetch"], records))
+
+        if len(trim_record) > 0:
+            logging.info(
+                f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
+            )
             configs.update_one(
                 {"pair": pair},
                 {
@@ -83,18 +88,7 @@ def collect(
                     }
                 },
             )
-            print(df)
-            if "last_fetch" in config:
-                trim_record = [
-                    num for num in records if num["ctm"] > config["last_fetch"]
-                ]
-                if len(trim_record) > 0:
-                    logging.info(
-                        f'cronjob get {len(trim_record)} {pair} candles {records[-1]["ctm"]}'
-                    )
-                    histories.insert_many(trim_record)
-            else:
-                histories.insert_many(records)
+            histories.insert_many(trim_record)
 
 
 def main():
