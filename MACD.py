@@ -12,7 +12,7 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 
-histories = db["eurusd"]
+histories = db["eurusd_15"]
 
 
 def calculate_macd(df, fast_period=12, slow_period=26, signal_period=9):
