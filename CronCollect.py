@@ -75,8 +75,7 @@ def collect(
             logging.info(
                 f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
             )
-            for r in records:
-                histories.update_one({"ctm": r["ctm"]}, {"$set": r}, upsert=True)
+            histories.insert_many(records, ordered=False)
 
 
 def main():
