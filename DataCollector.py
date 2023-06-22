@@ -14,8 +14,8 @@ mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 
 
-def collect(pair, fromTime):
-    collection = db[pair]
+def collect(pair, fromTime, timeframe):
+    collection = db[f"{pair}_{timeframe}"]
     configs = db["configs"]
 
     userId = os.getenv("XTB_USER_ID")
@@ -30,12 +30,13 @@ def collect(pair, fromTime):
         "getChartLastRequest",
         {
             "info": {
-                "period": 5,
+                "period": timeframe,
                 "start": fromTime,
                 "symbol": pair.upper(),
             }
         },
     )
+
     if res["status"] == True:
         df = pd.DataFrame(res["returnData"]["rateInfos"])
         digits = res["returnData"]["digits"]
@@ -48,7 +49,7 @@ def collect(pair, fromTime):
         print(df)
         records = df.to_dict("records")
         configs.update_one(
-            {"pair": pair},
+            {"pair": f"{pair}_{timeframe}"},
             {"$set": records[-1]},
         )
         records.pop()
@@ -61,8 +62,9 @@ def main():
     parser = argparse.ArgumentParser(description="Collector data candle manually")
     parser.add_argument("pair", type=str, help="currency pair")
     parser.add_argument("start", type=int, help="from timestamp")
+    parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
     args = parser.parse_args()
-    collect(args.pair, args.start)
+    collect(args.pair, args.start, args.timeframe if args.timeframe is not None else 5)
 
 
 if __name__ == "__main__":

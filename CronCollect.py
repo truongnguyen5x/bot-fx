@@ -6,6 +6,7 @@ from pymongo import MongoClient
 import logging
 import os
 from xAPIConnector import APIClient, loginCommand
+import argparse
 
 load_dotenv()
 
@@ -35,18 +36,13 @@ logger.addHandler(file_handler)
 def collect(
     pair,
     client,
-    timeframe=5,
+    timeframe,
 ):
     configs = db["configs"]
 
-    config = configs.find_one({"pair": pair})
-    histories = db[pair]
+    config = configs.find_one({"pair": f"{pair}_{timeframe}"})
+    histories = db[f"{pair}_{timeframe}"]
 
-    # Current time
-    current_time = datetime.now()
-
-    # Time to subtract
-    time_to_subtract = timedelta(minutes=timeframe * 2)
     res = client.commandExecute(
         "getChartLastRequest",
         {
@@ -71,17 +67,24 @@ def collect(
         print(df)
         if len(records) > 0:
             configs.update_one(
-                {"pair": pair},
+                {"pair": f"{pair}_{timeframe}"},
                 {"$set": records[-1]},
             )
             records.pop()
         if len(records) > 0:
-            logging.info(f"cronjob get {len(records)} {pair} candles")
+            logging.info(
+                f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
+            )
             histories.insert_many(records)
 
 
 def main():
     # Usage example
+
+    # create a parser object
+    parser = argparse.ArgumentParser(description="Collector data candle jobs")
+    parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
+    args = parser.parse_args()
 
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
@@ -92,7 +95,7 @@ def main():
         print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
         return
     for pair in list_pair:
-        collect(pair, client)
+        collect(pair, client, args.timeframe if args.timeframe is not None else 5)
 
 
 if __name__ == "__main__":
