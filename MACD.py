@@ -5,6 +5,8 @@ import pandas as pd
 from pymongo import MongoClient
 import matplotlib.pyplot as plt
 import mplfinance as mpf
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 load_dotenv()
 
@@ -15,67 +17,51 @@ db = mongoClient["bot_fx"]
 histories = db["eurusd_15"]
 
 
-def calculate_macd(df, fast_period=12, slow_period=26, signal_period=9):
-    # Calculate the exponential moving averages (EMA)
-    ema_fast = df["close"].ewm(span=fast_period).mean()
-    ema_slow = df["close"].ewm(span=slow_period).mean()
-
-    # Calculate the MACD line
-    macd_line = ema_fast - ema_slow
-
-    # Calculate the signal line
-    signal_line = macd_line.ewm(span=signal_period).mean()
-
-    # Calculate the MACD histogram
-    macd_histogram = macd_line - signal_line
-
-    # Add the calculated values to the DataFrame
-    df["macd_line"] = macd_line
-    df["signal_line"] = signal_line
-    df["macd_histogram"] = macd_histogram
-
-    return df
-
-
-def plot_macd(df):
-    plt.figure(figsize=(12, 6))
-
-    # Plot MACD line
-    plt.plot(df.index, df["macd_line"], label="MACD Line")
-
-    # Plot signal line
-    plt.plot(df.index, df["signal_line"], label="Signal Line")
-
-    # Plot MACD histogram
-    plt.bar(df.index, df["macd_histogram"], label="MACD Histogram", color="gray")
-
-    # Add zero line for the histogram
-    plt.axhline(0, color="black", linewidth=0.5)
-
-    plt.xlabel("Date")
-    plt.ylabel("MACD")
-    plt.title("MACD Indicator")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
 def plot_candles(df):
-    # Convert the date index to datetime format
-    df.index = pd.to_datetime(df.ctm, unit="ms")
-    df["volume"] = df["vol"]
+    df["index"] = pd.to_datetime(df["ctm"], unit="ms")
+    # Create a figure with two subplots (rows=2, cols=1) and shared x-axis (shared_xaxes=True)
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
 
-    # Create a dictionary with the required arguments for the candlestick chart
-    kwargs = dict(
-        type="candle", volume=True, figratio=(16, 9), title="EUR/USD Candlestick Chart"
+    # Add a candlestick trace to the first subplot (row=1, col=1)
+    fig.add_trace(
+        go.Candlestick(
+            x=df.index,
+            open=df["open"],
+            high=df["high"],
+            low=df["low"],
+            close=df["close"],
+            name="Candlestick",
+        ),
+        row=1,
+        col=1,
     )
 
-    # Plot the candlestick chart
-    mpf.plot(df, **kwargs)
+    # Add a MACD indicator trace to the second subplot (row=2, col=1)
+    # You can use the same code as before to calculate the MACD and signal lines
+    ema_12 = df["close"].ewm(span=12, adjust=False).mean()
+    ema_26 = df["close"].ewm(span=26, adjust=False).mean()
+    macd = ema_12 - ema_26
+    signal = macd.ewm(span=9, adjust=False).mean()
+    fig.add_trace(
+        go.Scatter(x=df.index, y=macd, line=dict(color="blue", width=1.5), name="MACD"),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index, y=signal, line=dict(color="orange", width=1.5), name="Signal"
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_bar(x=df.index, y=macd - signal, name="Histogram", row=2, col=1)
+
+    # Show the figure
+    fig.show()
 
 
 def main():
-    documents = histories.find().sort("_id", -1).limit(250)
+    documents = histories.find().sort("_id", -1).limit(1000)
     # Convert the documents to a list of dictionaries
 
     data = list(documents)
@@ -83,7 +69,7 @@ def main():
     data.reverse()
     # Create a DataFrame from the list of dictionaries
     df = pd.DataFrame(data)
-    print(df)
+
     plot_candles(df)
     # macd = calculate_macd(df)
     # plot_macd(macd)
