@@ -76,9 +76,7 @@ def collect(
                 f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
             )
             for r in records:
-                _exits = histories.find_one({"ctm": r["ctm"]})
-                if _exits is None:
-                    histories.insert_one(r)
+                histories.update_one({"ctm": r["ctm"]}, {"$set": r}, upsert=True)
 
 
 def main():
