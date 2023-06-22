@@ -13,7 +13,7 @@ load_dotenv()
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-list_pair = ("eurusd", "gbpusd")
+list_pair = ("eurusd", "gbpusd", "audusd", "nzdusd", "usdjpy")
 # Configure logging
 # Set the log file path
 log_file = os.path.join(os.getcwd(), "logfile.txt")
