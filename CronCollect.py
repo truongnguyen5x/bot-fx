@@ -75,7 +75,10 @@ def collect(
             logging.info(
                 f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
             )
-            histories.insert_many(records)
+            for r in records:
+                _exits = histories.find_one({"ctm": r["ctm"]})
+                if _exits is None:
+                    histories.insert_one(r)
 
 
 def main():
@@ -96,6 +99,7 @@ def main():
         return
     for pair in list_pair:
         collect(pair, client, args.timeframe if args.timeframe is not None else 5)
+    mongoClient.close()
 
 
 if __name__ == "__main__":

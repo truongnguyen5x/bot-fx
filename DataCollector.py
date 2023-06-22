@@ -65,6 +65,7 @@ def main():
     parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
     args = parser.parse_args()
     collect(args.pair, args.start, args.timeframe if args.timeframe is not None else 5)
+    mongoClient.close()
 
 
 if __name__ == "__main__":
