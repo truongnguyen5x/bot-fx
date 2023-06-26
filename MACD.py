@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import ta
+from scipy.signal import find_peaks
 
 load_dotenv()
 
@@ -15,7 +15,7 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 
-histories = db["eurusd_15"]
+histories = db["eurusd_5"]
 
 
 def plot_candles(df):
@@ -37,20 +37,59 @@ def plot_candles(df):
         col=1,
     )
 
-    # Add a MACD indicator trace to the second subplot (row=2, col=1)
-    # You can use the same code as before to calculate the MACD and signal lines
+    # Calculate MACD and signal lines
     ema_12 = df["close"].ewm(span=12, adjust=False).mean()
     ema_26 = df["close"].ewm(span=26, adjust=False).mean()
     macd = ema_12 - ema_26
     signal = macd.ewm(span=9, adjust=False).mean()
+
+    # Find peaks and valleys of the MACD line
+    macd_peaks, _ = find_peaks(macd, prominence=0.00015, distance=24)
+    macd_valleys, _ = find_peaks(-macd, prominence=0.00015, distance=24)
+
+    # Plot MACD peaks as '*' symbols
     fig.add_trace(
-        go.Scatter(x=df.index, y=macd, line=dict(color="blue", width=1.5), name="MACD"),
+        go.Scatter(
+            x=df.index[macd_peaks],
+            y=macd.iloc[macd_peaks],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="red"),
+            name="MACD Peaks",
+        ),
+        row=2,
+        col=1,
+    )
+
+    # Plot MACD valleys as '*' symbols
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[macd_valleys],
+            y=macd.iloc[macd_valleys],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="green"),
+            name="MACD Valleys",
+        ),
+        row=2,
+        col=1,
+    )
+
+    # Add MACD and signal lines to the second subplot (row=2, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=macd,
+            line=dict(color="blue", width=1.5),
+            name="MACD",
+        ),
         row=2,
         col=1,
     )
     fig.add_trace(
         go.Scatter(
-            x=df.index, y=signal, line=dict(color="orange", width=1.5), name="Signal"
+            x=df.index,
+            y=signal,
+            line=dict(color="orange", width=1.5),
+            name="Signal",
         ),
         row=2,
         col=1,
