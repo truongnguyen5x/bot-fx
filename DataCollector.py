@@ -12,6 +12,7 @@ load_dotenv()
 
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
+list_pair = ("eurusd", "gbpusd", "audusd", "nzdusd", "usdjpy")
 
 
 def collect(pair, fromTime, timeframe):
@@ -50,9 +51,9 @@ def collect(pair, fromTime, timeframe):
         records = df.to_dict("records")
         configs.update_one(
             {"pair": f"{pair}_{timeframe}"},
-            {"$set": records[-1]},
+            {"$set": {"digits": digits}},
         )
-        records.pop()
+
         collection.delete_many({})
         collection.insert_many(records)
 
@@ -64,7 +65,9 @@ def main():
     parser.add_argument("start", type=int, help="from timestamp")
     parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
     args = parser.parse_args()
-    collect(args.pair, args.start, args.timeframe if args.timeframe is not None else 5)
+    for pair in list_pair:
+        collect(pair, args.start, args.timeframe if args.timeframe is not None else 5)
+    # collect(args.pair, args.start, args.timeframe if args.timeframe is not None else 5)
     mongoClient.close()
 
 

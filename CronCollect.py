@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
 import pandas as pd
+import pymongo
 from pymongo import MongoClient
 import logging
 import os
@@ -38,17 +39,14 @@ def collect(
     client,
     timeframe,
 ):
-    configs = db["configs"]
-
-    config = configs.find_one({"pair": f"{pair}_{timeframe}"})
     histories = db[f"{pair}_{timeframe}"]
-
+    last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
     res = client.commandExecute(
         "getChartLastRequest",
         {
             "info": {
                 "period": timeframe,
-                "start": config["ctm"],
+                "start": last_candle["ctm"] - timeframe * 2 * 60000,
                 "symbol": pair.upper(),
             }
         },
@@ -65,17 +63,15 @@ def collect(
 
         records = df.to_dict("records")
         print(df)
-        if len(records) > 0:
-            configs.update_one(
-                {"pair": f"{pair}_{timeframe}"},
-                {"$set": records[-1]},
-            )
-            records.pop()
+
         if len(records) > 0:
             logging.info(
                 f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
             )
-            histories.insert_many(records, ordered=False)
+            for record in records:
+                histories.update_one(
+                    {"ctm": record["ctm"]}, {"$set": record}, upsert=True
+                )
 
 
 def main():
