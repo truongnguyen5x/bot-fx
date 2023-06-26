@@ -8,6 +8,8 @@ import mplfinance as mpf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
+import time
+
 
 load_dotenv()
 
@@ -15,7 +17,7 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 
-histories = db["eurusd_5"]
+histories = db["gbpusd_5"]
 
 
 def plot_candles(df):
@@ -44,8 +46,8 @@ def plot_candles(df):
     signal = macd.ewm(span=9, adjust=False).mean()
 
     # Find peaks and valleys of the MACD line
-    macd_peaks, _ = find_peaks(macd, prominence=0.00015, distance=24)
-    macd_valleys, _ = find_peaks(-macd, prominence=0.00015, distance=24)
+    macd_peaks, _ = find_peaks(macd, prominence=0.0002, distance=30)
+    macd_valleys, _ = find_peaks(-macd, prominence=0.0002, distance=30)
 
     # Plot MACD peaks as '*' symbols
     fig.add_trace(
@@ -101,12 +103,22 @@ def plot_candles(df):
 
 
 def main():
-    documents = histories.find().sort("_id", -1).limit(1000)
+    documents = histories.find(
+        {
+            "ctm": {
+                "$gt": datetime(2023, 6, 23).timestamp() * 1000,
+                "$lt": datetime(2023, 6, 26, 23).timestamp() * 1000,
+            }
+        }
+    )
+    # documents = histories.find().sort("_id", -1).limit(1000)
     # Convert the documents to a list of dictionaries
 
     data = list(documents)
     # Reverse the list to restore the original order
-    data.reverse()
+    # data.reverse()
+    # del data[-24:]
+
     # Create a DataFrame from the list of dictionaries
     df = pd.DataFrame(data)
 
