@@ -20,18 +20,8 @@ histories = db["eurusd_15"]
 
 def plot_candles(df):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
-    # Create a figure with two subplots (rows=2, cols=1) and shared x-axis (shared_xaxes=True)
-    # Assuming your dataframe is called df and has columns named 'Open', 'High', 'Low', 'Close'
-    # You can change the column names as needed
 
-    # Calculate the ADX indicator using the ta library
-    adx = ta.trend.ADXIndicator(df["high"], df["low"], df["close"], window=14)
-    df["ADX"] = adx.adx()
-    df["+DI"] = adx.adx_pos()
-    df["-DI"] = adx.adx_neg()
-
-    # Create a figure with three subplots (rows=3, cols=1) and shared x-axis (shared_xaxes=True)
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True)
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
 
     # Add a candlestick trace to the first subplot (row=1, col=1)
     fig.add_trace(
@@ -66,29 +56,6 @@ def plot_candles(df):
         col=1,
     )
     fig.add_bar(x=df.index, y=macd - signal, name="Histogram", row=2, col=1)
-
-    # Add an ADX indicator trace to the third subplot (row=3, col=1)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df["ADX"], line=dict(color="black", width=1.5), name="ADX"
-        ),
-        row=3,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df["+DI"], line=dict(color="green", width=1.5), name="+DI"
-        ),
-        row=3,
-        col=1,
-    )
-    fig.add_trace(
-        go.Scatter(
-            x=df.index, y=df["-DI"], line=dict(color="red", width=1.5), name="-DI"
-        ),
-        row=3,
-        col=1,
-    )
 
     # Show the figure
     fig.show()

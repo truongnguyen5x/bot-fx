@@ -46,7 +46,7 @@ def collect(
         {
             "info": {
                 "period": timeframe,
-                "start": last_candle["ctm"] - timeframe * 2 * 60000,
+                "start": last_candle["ctm"] - timeframe * 60000,
                 "symbol": pair.upper(),
             }
         },
