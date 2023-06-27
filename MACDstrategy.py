@@ -99,14 +99,14 @@ def macd(pair, timeframe, trend):
                 "tradeTransInfo": {
                     "cmd": 0 if trend == "uptrend" else 1,
                     "customComment": "By MACD strategy",
-                    # "expiration": ""
-                    # "offset": 10,
+                    "expiration": 0,
                     "order": 0,
-                    # "price": 1.12,
-                    "sl": 20,
+                    "price": 1.4,
+                    "sl": 0,
+                    "tp": 0,
                     "symbol": "EURUSD",
-                    "tp": 20,
                     "type": 0,
+                    "volume": 0.1,
                 }
             },
         )
