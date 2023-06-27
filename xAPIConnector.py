@@ -75,7 +75,7 @@ class JsonSocket(object):
                 logger.error("SockThread Error: %s" % msg)
                 time.sleep(0.25)
                 continue
-            logger.info("Socket connected")
+            # logger.info("Socket connected")
             return True
         return False
 
@@ -89,7 +89,7 @@ class JsonSocket(object):
             msg = msg.encode("utf-8")
             while sent < len(msg):
                 sent += self.conn.send(msg[sent:])
-                logger.info("Sent: " + str(msg))
+                # logger.info("Sent: " + str(msg))
                 time.sleep(API_SEND_TIMEOUT / 1000)
 
     def _read(self, bytesSize=4096):
@@ -353,7 +353,7 @@ def main():
 
     # connect to RR socket, login
     loginResponse = client.execute(loginCommand(userId=userId, password=password))
-    logger.info(str(loginResponse))
+    # logger.info(str(loginResponse))
 
     # check if user logged in correctly
     if loginResponse["status"] == False:

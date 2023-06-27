@@ -75,6 +75,32 @@ def plot_candles(df):
         col=1,
     )
 
+    # Plot MACD peaks as '*' symbols on the candlestick chart
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[macd_peaks],
+            y=df["high"].iloc[macd_peaks],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="black"),
+            name="MACD Peaks",
+        ),
+        row=1,
+        col=1,
+    )
+
+    # Plot MACD valleys as '*' symbols on the candlestick chart
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[macd_valleys],
+            y=df["low"].iloc[macd_valleys],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="black"),
+            name="MACD Valleys",
+        ),
+        row=1,
+        col=1,
+    )
+
     # Add MACD and signal lines to the second subplot (row=2, col=1)
     fig.add_trace(
         go.Scatter(
@@ -107,7 +133,7 @@ def main():
         {
             "ctm": {
                 "$gt": datetime(2023, 6, 23).timestamp() * 1000,
-                "$lt": datetime(2023, 6, 26, 23).timestamp() * 1000,
+                "$lt": datetime(2023, 6, 27, 23).timestamp() * 1000,
             }
         }
     )
