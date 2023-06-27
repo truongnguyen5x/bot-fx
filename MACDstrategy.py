@@ -80,6 +80,13 @@ def macd(pair, timeframe, trend):
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
 
+    last_peak_ctm = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
+
+    if last_peak_ctm < start_hour or last_peak_ctm > end_hour:
+        # TODO:
+        print("last peak not in session")
+        return
+
     last_order = order_histories.find_one(
         {"pair": pair, "ctm": {"$gte": last_peak_candle["ctm"]}}
     )
@@ -93,21 +100,22 @@ def macd(pair, timeframe, trend):
         if loginResponse["status"] == False:
             print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
             return
-        res = client.commandExecute(
-            "tradeTransaction",
-            {
-                "tradeTransInfo": {
-                    "cmd": 0 if trend == "uptrend" else 1,
-                    "customComment": "By MACD strategy",
-                    "expiration": 0,
-                    "order": 0,
-                    "price": 1.4,
-                    "sl": 0,
-                    "tp": 0,
-                    "symbol": "EURUSD",
-                    "type": 0,
-                    "volume": 0.1,
-                }
-            },
-        )
-        print(res)
+
+        # res = client.commandExecute(
+        #     "tradeTransaction",
+        #     {
+        #         "tradeTransInfo": {
+        #             "cmd": 0 if trend == "uptrend" else 1,
+        #             "customComment": "By MACD strategy",
+        #             "expiration": 0,
+        #             "order": 0,
+        #             "price": 1.4,
+        #             "sl": 0,
+        #             "tp": 0,
+        #             "symbol": "EURUSD",
+        #             "type": 0,
+        #             "volume": 0.1,
+        #         }
+        #     },
+        # )
+        # print(res)

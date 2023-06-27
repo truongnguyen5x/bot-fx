@@ -133,7 +133,7 @@ def main():
         {
             "ctm": {
                 "$gt": datetime(2023, 6, 23).timestamp() * 1000,
-                "$lt": datetime(2023, 6, 27, 23).timestamp() * 1000,
+                "$lt": datetime(2023, 6, 28, 23).timestamp() * 1000,
             }
         }
     )
