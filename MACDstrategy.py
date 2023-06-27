@@ -3,28 +3,35 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 from scipy.signal import find_peaks
+import logging
+from datetime import datetime
+from xAPIConnector import APIClient, loginCommand
+import pytz
 
 load_dotenv()
+# set to true on debug environment only
+DEBUG = True
 
-# class Strategy:
-#     def __init__(self, name, pair, timeframe, trend) -> None:
-#         self.name = name
-#         self.pair = pair
-#         self.timeframe = timeframe
-#         self.trend = trend
+# Configure logging
+# Set the log file path
+log_file = os.path.join(os.getcwd(), "logfile.txt")
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
+# Create a FileHandler and set its properties
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.DEBUG)
 
-# class MACDstrategy(Strategy):
-#     def __init__(self, pair, timeframe, trend) -> None:
-#         super().__init__("macd", pair, timeframe, trend)
+# Create a Formatter and set its properties
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+file_handler.setFormatter(formatter)
 
-#     def execute():
-#         print("execute")
-#         pass
+# Add the FileHandler to the logger
+logger.addHandler(file_handler)
 
 
 def macd(pair, timeframe, trend):
-    print(pair)
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 
     db = mongoClient["bot_fx"]
@@ -32,6 +39,27 @@ def macd(pair, timeframe, trend):
     histories = db[pair]
     configs = db["configs"]
     config = configs.find_one({"pair": pair})
+
+    # check session EU, US
+    # Lấy múi giờ +0
+    timezone = pytz.timezone("Etc/GMT")
+    now = datetime.now(timezone)
+    start_hour = now.replace(
+        hour=config["start_hour"].hour,
+        minute=config["start_hour"].minute,
+        second=0,
+        microsecond=0,
+    )
+    end_hour = now.replace(
+        hour=config["end_hour"].hour,
+        minute=config["end_hour"].minute,
+        second=0,
+        microsecond=0,
+    )
+    if now < start_hour or now > end_hour:
+        # TODO:
+        print("not in session")
+        # return
 
     candles = histories.find().sort("ctm", -1).limit(200)
     _candles = list(candles)
@@ -50,6 +78,36 @@ def macd(pair, timeframe, trend):
         distance=config["macd_distance"],
     )
     last_peak_index = peaks[-1]
-    last_peaK_candle = _candles[last_peak_index]
+    last_peak_candle = _candles[last_peak_index]
 
-    print(last_peaK_candle)
+    last_order = order_histories.find_one(
+        {"pair": pair, "ctm": {"$gte": last_peak_candle["ctm"]}}
+    )
+
+    if last_order is None:
+        # open order
+        userId = os.getenv("XTB_USER_ID")
+        password = os.getenv("XTB_PASSWORD")
+        client = APIClient()
+        loginResponse = client.execute(loginCommand(userId=userId, password=password))
+        if loginResponse["status"] == False:
+            print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
+            return
+        res = client.commandExecute(
+            "tradeTransaction",
+            {
+                "tradeTransInfo": {
+                    "cmd": 0 if trend == "uptrend" else 1,
+                    "customComment": "By MACD strategy",
+                    # "expiration": ""
+                    # "offset": 10,
+                    "order": 0,
+                    # "price": 1.12,
+                    "sl": 20,
+                    "symbol": "EURUSD",
+                    "tp": 20,
+                    "type": 0,
+                }
+            },
+        )
+        print(res)
