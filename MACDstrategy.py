@@ -80,9 +80,12 @@ def macd(pair, timeframe, trend):
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
 
-    last_peak_ctm = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
+    last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
+    last_peak_time_1 = last_peak_time.replace(
+        year=now.year, month=now.month, day=now.day
+    )
 
-    if last_peak_ctm < start_hour or last_peak_ctm > end_hour:
+    if last_peak_time_1 < start_hour or last_peak_time_1 > end_hour:
         # TODO:
         print("last peak not in session")
         return
@@ -100,22 +103,52 @@ def macd(pair, timeframe, trend):
         if loginResponse["status"] == False:
             print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
             return
-
-        # res = client.commandExecute(
-        #     "tradeTransaction",
-        #     {
-        #         "tradeTransInfo": {
-        #             "cmd": 0 if trend == "uptrend" else 1,
-        #             "customComment": "By MACD strategy",
-        #             "expiration": 0,
-        #             "order": 0,
-        #             "price": 1.4,
-        #             "sl": 0,
-        #             "tp": 0,
-        #             "symbol": "EURUSD",
-        #             "type": 0,
-        #             "volume": 0.1,
-        #         }
-        #     },
-        # )
+        res = client.commandExecute(
+            "getSymbol",
+            {
+                "symbol": [pair.split("_")[0].upper()],
+            },
+        )
         # print(res)
+        if res["status"] == True:
+            ask = res["returnData"]["ask"]
+            bid = res["returnData"]["bid"]
+            sl_pip = config["sl"] / pow(10, config["digits"])
+            tp_pip = config["tp"] / pow(10, config["digits"])
+            res_order = client.commandExecute(
+                "tradeTransaction",
+                {
+                    "tradeTransInfo": {
+                        "cmd": 0 if trend == "uptrend" else 1,
+                        "customComment": "By MACD strategy",
+                        "expiration": 0,
+                        "order": 0,
+                        "price": ask if trend == "uptrend" else bid,
+                        "sl": bid - sl_pip if trend == "uptrend" else ask + sl_pip,
+                        "tp": bid + tp_pip if trend == "uptrend" else ask - tp_pip,
+                        "symbol": "EURUSD",
+                        "type": 0,
+                        "volume": config["lots_size"],
+                    }
+                },
+            )
+            if res_order["status"] == True:
+                logger.info(
+                    f"{trend} create order ${pair} at {now} base on MACD {last_peak_candle['ctm']}"
+                )
+                order_id = res_order["returnData"]["order"]
+
+                order_histories.insert_one(
+                    {
+                        "pair": pair,
+                        "ctm": last_peak_candle["ctm"],
+                        "ctm_str": datetime.utcfromtimestamp(
+                            last_peak_candle["ctm"] / 1000
+                        ),
+                        "order_id": order_id,
+                        "timestamp": int(now.timestamp() * 1000),
+                        "timestamp_str": datetime.utcfromtimestamp(
+                            int(now.timestamp())
+                        ),
+                    }
+                )

@@ -85,7 +85,7 @@ def main():
         print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
         return
     configs = db["configs"]
-    pairs = configs.find()
+    pairs = configs.find({"enabled": True})
     for pair in pairs:
         macd(pair["pair"], 5, pair["trend"])
 
