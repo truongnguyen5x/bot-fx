@@ -47,7 +47,7 @@ def macd(pair, trend):
     if now < start_hour or now > end_hour:
         # TODO:
         print("not in session")
-        # return
+        return
 
     candles = histories.find().sort("ctm", -1).limit(200)
     _candles = list(candles)
