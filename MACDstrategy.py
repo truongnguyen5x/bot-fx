@@ -125,7 +125,7 @@ def macd(pair, trend):
             )
             if res_order["status"] == True:
                 logger.info(
-                    f"{trend} create order ${pair} at {now} base on MACD {last_peak_candle['ctm']}"
+                    f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
                 )
                 order_id = res_order["returnData"]["order"]
                 order_histories.insert_one(
