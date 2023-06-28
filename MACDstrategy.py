@@ -9,25 +9,13 @@ from xAPIConnector import APIClient, loginCommand
 import pytz
 
 load_dotenv()
-# set to true on debug environment only
-DEBUG = True
 
-# Configure logging
-# Set the log file path
-log_file = os.path.join(os.getcwd(), "logfile.txt")
-# Configure logging
+# Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
-# Create a FileHandler and set its properties
-file_handler = logging.FileHandler(log_file)
+file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
 file_handler.setLevel(logging.DEBUG)
-
-# Create a Formatter and set its properties
-formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-file_handler.setFormatter(formatter)
-
-# Add the FileHandler to the logger
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
 
 
@@ -113,7 +101,6 @@ def macd(pair, trend):
                 "symbol": [pair.split("_")[0].upper()],
             },
         )
-        # print(res)
         if res["status"] == True:
             ask = res["returnData"]["ask"]
             bid = res["returnData"]["bid"]
@@ -141,7 +128,6 @@ def macd(pair, trend):
                     f"{trend} create order ${pair} at {now} base on MACD {last_peak_candle['ctm']}"
                 )
                 order_id = res_order["returnData"]["order"]
-
                 order_histories.insert_one(
                     {
                         "pair": pair,

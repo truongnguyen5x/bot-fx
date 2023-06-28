@@ -3,12 +3,10 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 from pymongo import MongoClient
-
 from xAPIConnector import APIClient, loginCommand
 import argparse
 
 load_dotenv()
-
 
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]

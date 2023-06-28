@@ -3,20 +3,15 @@ import os
 from datetime import datetime, timedelta
 import pandas as pd
 from pymongo import MongoClient
-import matplotlib.pyplot as plt
-import mplfinance as mpf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
-import time
-
 
 load_dotenv()
 
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-
 histories = db["eurusd_5"]
 
 
@@ -139,18 +134,11 @@ def main():
     )
     # documents = histories.find().sort("_id", -1).limit(1000)
     # Convert the documents to a list of dictionaries
-
     data = list(documents)
-    # Reverse the list to restore the original order
     # data.reverse()
     # del data[-24:]
-
-    # Create a DataFrame from the list of dictionaries
     df = pd.DataFrame(data)
-
     plot_candles(df)
-    # macd = calculate_macd(df)
-    # plot_macd(macd)
 
 
 if __name__ == "__main__":

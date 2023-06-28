@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os
-from datetime import datetime, timedelta
 import pandas as pd
 import pymongo
 from pymongo import MongoClient
@@ -15,22 +14,14 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 list_pair = ("eurusd", "gbpusd", "audusd", "nzdusd", "usdjpy")
-# Configure logging
-# Set the log file path
-log_file = os.path.join(os.getcwd(), "logfile.txt")
-# Configure logging
+
+
+# Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-
-# Create a FileHandler and set its properties
-file_handler = logging.FileHandler(log_file)
+file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
 file_handler.setLevel(logging.DEBUG)
-
-# Create a Formatter and set its properties
-formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-file_handler.setFormatter(formatter)
-
-# Add the FileHandler to the logger
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
 
 
@@ -75,8 +66,6 @@ def collect(
 
 
 def main():
-    # Usage example
-
     # create a parser object
     parser = argparse.ArgumentParser(description="Collector data candle jobs")
     parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
