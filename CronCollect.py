@@ -56,9 +56,9 @@ def collect(
         print(df)
 
         if len(records) > 0:
-            logging.info(
-                f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
-            )
+            # logging.info(
+            #     f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
+            # )
             for record in records:
                 histories.update_one(
                     {"ctm": record["ctm"]}, {"$set": record}, upsert=True
