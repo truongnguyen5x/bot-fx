@@ -1,6 +1,15 @@
 from flask import Flask, jsonify, request
+from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
+
+# Connect to your mongodb database
+mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
+db = mongoClient["bot_fx"]
 
 # Một danh sách các đối tượng dữ liệu giả
 books = [
@@ -14,6 +23,13 @@ books = [
 @app.route("/api/books", methods=["GET"])
 def get_books():
     return jsonify(books)
+
+
+@app.route("/pairs", methods=["GET"])
+def get_pairs():
+    enabled_pairs = db.configs.find({"enabled": True})
+    print(enabled_pairs)
+    return "hello"
 
 
 if __name__ == "__main__":

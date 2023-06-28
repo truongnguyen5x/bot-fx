@@ -12,7 +12,7 @@ load_dotenv()
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-histories = db["audusd_5"]
+histories = db["eurusd_5"]
 
 
 def plot_candles(df):

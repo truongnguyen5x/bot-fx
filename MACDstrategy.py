@@ -135,6 +135,7 @@ def macd(pair, trend):
                         "ctm_str": datetime.utcfromtimestamp(
                             last_peak_candle["ctm"] / 1000
                         ),
+                        "from": "MACD strategy",
                         "order_id": order_id,
                         "status": "pending",
                         "open_time": int(now.timestamp() * 1000),
