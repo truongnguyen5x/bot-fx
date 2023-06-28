@@ -35,44 +35,22 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
-def collect(
-    pair,
-    client,
-    timeframe,
-):
-    histories = db[f"{pair}_{timeframe}"]
-    last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
-    res = client.commandExecute(
-        "getChartLastRequest",
-        {
-            "info": {
-                "period": timeframe,
-                "start": last_candle["ctm"] - timeframe * 60000,
-                "symbol": pair.upper(),
-            }
-        },
-    )
-    if res["status"] == True:
-        df = pd.DataFrame(res["returnData"]["rateInfos"])
-        digits = res["returnData"]["digits"]
-        del df["ctmString"]
-        df["close"] = (df["open"] + df["close"]) / pow(10, digits)
-        df["high"] = (df["open"] + df["high"]) / pow(10, digits)
-        df["low"] = (df["open"] + df["low"]) / pow(10, digits)
-        df["open"] = df["open"] / pow(10, digits)
-        df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
+ORDER_STATUS = ["error", "pending", None, "accepted", "rejected"]
 
-        records = df.to_dict("records")
-        print(df)
 
-        if len(records) > 0:
-            logging.info(
-                f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
+def check_opened_order(client):
+    order_histories = db["orders"]
+    pending_orders = order_histories.find({"status": "pending"})
+    for order in pending_orders:
+        res = client.commandExecute(
+            "tradeTransactionStatus", {"order": order["order_id"]}
+        )
+        if res["status"] == True:
+            requestStatus = res["returnData"]["requestStatus"]
+            order_histories.update_one(
+                {"order_id": order["order_id"]},
+                {"$set": {"status": ORDER_STATUS[requestStatus]}},
             )
-            for record in records:
-                histories.update_one(
-                    {"ctm": record["ctm"]}, {"$set": record}, upsert=True
-                )
 
 
 def main():
@@ -86,8 +64,9 @@ def main():
         return
     configs = db["configs"]
     pairs = configs.find({"enabled": True})
+    check_opened_order(client)
     for pair in pairs:
-        macd(pair["pair"], 5, pair["trend"])
+        macd(pair["pair"], pair["trend"])
 
     mongoClient.close()
 

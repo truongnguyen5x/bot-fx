@@ -31,7 +31,7 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
-def macd(pair, timeframe, trend):
+def macd(pair, trend):
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 
     db = mongoClient["bot_fx"]
@@ -91,7 +91,11 @@ def macd(pair, timeframe, trend):
         return
 
     last_order = order_histories.find_one(
-        {"pair": pair, "ctm": {"$gte": last_peak_candle["ctm"]}}
+        {
+            "pair": pair,
+            "ctm": {"$gte": last_peak_candle["ctm"]},
+            "status": {"$in": ["accepted", "pending"]},
+        }
     )
 
     if last_order is None:
@@ -146,8 +150,9 @@ def macd(pair, timeframe, trend):
                             last_peak_candle["ctm"] / 1000
                         ),
                         "order_id": order_id,
-                        "timestamp": int(now.timestamp() * 1000),
-                        "timestamp_str": datetime.utcfromtimestamp(
+                        "status": "pending",
+                        "open_time": int(now.timestamp() * 1000),
+                        "open_time_str": datetime.utcfromtimestamp(
                             int(now.timestamp())
                         ),
                     }
