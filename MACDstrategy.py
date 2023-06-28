@@ -7,8 +7,10 @@ import logging
 from datetime import datetime
 from xAPIConnector import APIClient, loginCommand
 import pytz
+from telegram import Bot
 
 load_dotenv()
+
 
 # Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
@@ -18,8 +20,13 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
 
+bot = Bot(token="6008288565:AAG3nZkQejEdo-ALp9ZkG30ItGVApgbAixQ")
+
 
 def macd(pair, trend):
+    bot.send_message(
+        chat_id="849785415", text=f"MACD strategy {pair} {trend} create order"
+    )
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 
     db = mongoClient["bot_fx"]
@@ -122,6 +129,10 @@ def macd(pair, trend):
                 },
             )
             if res_order["status"] == True:
+                bot.send_message(
+                    chat_id="849785415",
+                    text=f"MACD strategy {pair} {trend} create order",
+                )
                 logger.info(
                     f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
                 )
