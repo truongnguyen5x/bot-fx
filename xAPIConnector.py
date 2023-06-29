@@ -7,13 +7,15 @@ from threading import Thread
 from dotenv import load_dotenv
 import os
 
+load_dotenv()
+
 # set to true on debug environment only
 DEBUG = True
 
 # default connection properites
 DEFAULT_XAPI_ADDRESS = "xapi.xtb.com"
-DEFAULT_XAPI_PORT = 5112
-DEFUALT_XAPI_STREAMING_PORT = 5113
+DEFAULT_XAPI_PORT = 5112 if os.getenv("ENV") == "production" else 5124
+DEFUALT_XAPI_STREAMING_PORT = 5113 if os.getenv("ENV") == "production" else 5125
 
 
 # wrapper name and version

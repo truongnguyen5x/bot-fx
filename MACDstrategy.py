@@ -20,12 +20,12 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
 
-bot = Bot(token="6008288565:AAG3nZkQejEdo-ALp9ZkG30ItGVApgbAixQ")
+bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 
 def macd(pair, trend):
     bot.send_message(
-        chat_id="849785415", text=f"MACD strategy {pair} {trend} create order"
+        chat_id=os.getenv("TELEGRAM_USER_ID"), text=f"MACD strategy {pair} {trend} create order"
     )
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 
@@ -130,8 +130,7 @@ def macd(pair, trend):
             )
             if res_order["status"] == True:
                 bot.send_message(
-                    chat_id="849785415",
-                    text=f"MACD strategy {pair} {trend} create order",
+                    chat_id=os.getenv("TELEGRAM_USER_ID"), text=f"MACD strategy {pair} {trend} create order"
                 )
                 logger.info(
                     f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
