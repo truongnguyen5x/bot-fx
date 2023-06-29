@@ -12,7 +12,11 @@ load_dotenv()
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-histories = db["eurusd_5"]
+pair = "eurusd_5"
+histories = db[pair]
+configs = db["configs"]
+
+config = configs.find_one({"pair": pair})
 
 
 def plot_candles(df):
@@ -41,8 +45,12 @@ def plot_candles(df):
     signal = macd.ewm(span=9, adjust=False).mean()
 
     # Find peaks and valleys of the MACD line
-    macd_peaks, _ = find_peaks(macd, prominence=0.0002, distance=30)
-    macd_valleys, _ = find_peaks(-macd, prominence=0.0002, distance=30)
+    macd_peaks, _ = find_peaks(
+        macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
+    )
+    macd_valleys, _ = find_peaks(
+        -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
+    )
 
     # Plot MACD peaks as '*' symbols
     fig.add_trace(
@@ -128,7 +136,7 @@ def main():
         {
             "ctm": {
                 "$gt": datetime(2023, 6, 23).timestamp() * 1000,
-                "$lt": datetime(2023, 6, 28, 23).timestamp() * 1000,
+                "$lt": datetime(2023, 7, 28, 23).timestamp() * 1000,
             }
         }
     )

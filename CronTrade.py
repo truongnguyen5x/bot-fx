@@ -52,6 +52,7 @@ def main():
     for pair in pairs:
         if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
             macd(pair["pair"], pair["trend"])
+            pass
 
     mongoClient.close()
 
