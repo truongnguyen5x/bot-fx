@@ -23,7 +23,7 @@ logger.addHandler(file_handler)
 # bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 
-def open_order(pair, tp, sl, lots_size, trend, order_histories, last_peak_ctm):
+def open_order(pair, tp, sl, lots_size, trend):
     timezone = pytz.timezone("Etc/GMT")
     now = datetime.now(timezone)
     # open order
@@ -66,24 +66,9 @@ def open_order(pair, tp, sl, lots_size, trend, order_histories, last_peak_ctm):
             #     chat_id=os.getenv("TELEGRAM_USER_ID"),
             #     text=f"MACD strategy {pair} {trend} create order",
             # )
-            logger.info(
-                f"{trend} create order {pair} at {now} base on MACD {last_peak_ctm}"
-            )
+
             order_id = res_order["returnData"]["order"]
-            order_histories.insert_one(
-                {
-                    "pair": pair,
-                    "ctm": last_peak_ctm,
-                    "ctm_str": datetime.utcfromtimestamp(last_peak_ctm / 1000),
-                    "from": "MACD strategy",
-                    "order_id": order_id,
-                    "status": "pending",
-                    "open_time": int(now.timestamp() * 1000),
-                    "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
-                }
-            )
-        else:
-            print(res)
+            return order_id
 
 
 def macd(pair, trend):
@@ -138,16 +123,6 @@ def macd(pair, trend):
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
 
-    # open_order(
-    #     pair=pair,
-    #     trend=trend,
-    #     order_histories=order_histories,
-    #     last_peak_ctm=last_peak_candle["ctm"],
-    #     sl=config["sl"] / pow(10, config["digits"]),
-    #     tp=config["tp"] / pow(10, config["digits"]),
-    #     lots_size=config["lots_size"],
-    # )
-
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
     last_peak_time_1 = last_peak_time.replace(
         year=now.year, month=now.month, day=now.day
@@ -166,13 +141,29 @@ def macd(pair, trend):
     )
 
     if last_order is None:
-        open_order(
+        order_id = open_order(
             pair=pair,
             trend=trend,
-            order_histories=order_histories,
             last_peak_ctm=last_peak_candle["ctm"],
-            sl=config["sl"] / pow(10, config["digits"]),
-            tp=config["tp"] / pow(10, config["digits"]),
+            sl=config["sl"],
+            tp=config["tp"],
             lots_size=config["lots_size"],
         )
-        pass
+        if order_id is not None:
+            logger.info(
+                f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
+            )
+            order_histories.insert_one(
+                {
+                    "pair": pair,
+                    "ctm": last_peak_candle["ctm"],
+                    "ctm_str": datetime.utcfromtimestamp(
+                        last_peak_candle["ctm"] / 1000
+                    ),
+                    "from": "MACD strategy",
+                    "order_id": order_id,
+                    "status": "pending",
+                    "open_time": int(now.timestamp() * 1000),
+                    "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
+                }
+            )
