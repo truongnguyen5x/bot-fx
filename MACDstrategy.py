@@ -23,9 +23,7 @@ logger.addHandler(file_handler)
 # bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 
-def open_order(pair, tp, sl, lots_size, trend):
-    timezone = pytz.timezone("Etc/GMT")
-    now = datetime.now(timezone)
+def open_order(pair, tp, sl, lots_size, trend, digits):
     # open order
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
@@ -53,8 +51,8 @@ def open_order(pair, tp, sl, lots_size, trend):
                     "expiration": 0,
                     "order": 0,
                     "price": ask if trend == "uptrend" else bid,
-                    "sl": bid - sl if trend == "uptrend" else ask + sl,
-                    "tp": bid + tp if trend == "uptrend" else ask - tp,
+                    "sl": round(bid - sl if trend == "uptrend" else ask + sl, digits),
+                    "tp": round(bid + tp if trend == "uptrend" else ask - tp, digits),
                     "symbol": pair.split("_")[0].upper(),
                     "type": 0,
                     "volume": lots_size,
@@ -144,9 +142,9 @@ def macd(pair, trend):
         order_id = open_order(
             pair=pair,
             trend=trend,
-            last_peak_ctm=last_peak_candle["ctm"],
             sl=config["sl"],
             tp=config["tp"],
+            digits=config["digits"],
             lots_size=config["lots_size"],
         )
         if order_id is not None:

@@ -47,10 +47,10 @@ def collect(pair, fromTime, timeframe):
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
         print(df)
         records = df.to_dict("records")
-        configs.update_one(
-            {"pair": f"{pair}_{timeframe}"},
-            {"$set": {"digits": digits}},
-        )
+        # configs.update_one(
+        #     {"pair": f"{pair}_{timeframe}"},
+        #     {"$set": {"digits": digits}},
+        # )
 
         collection.delete_many({})
         collection.insert_many(records)
