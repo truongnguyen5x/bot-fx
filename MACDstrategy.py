@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from xAPIConnector import APIClient, loginCommand
 import pytz
-from telegram import Bot
+import requests
 
 load_dotenv()
 
@@ -19,8 +19,6 @@ file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
-
-# bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
 
 def open_order(pair, tp, sl, lots_size, trend, digits):
@@ -150,6 +148,9 @@ def macd(pair, trend):
         if order_id is not None:
             logger.info(
                 f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
+            )
+            requests.get(
+                f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
             )
             order_histories.insert_one(
                 {
