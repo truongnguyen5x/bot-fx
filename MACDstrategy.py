@@ -149,8 +149,8 @@ def macd(pair, trend):
         print(f"last peak not in session {pair} {last_peak_time}")
         return
 
-    if last_peak_time < config["updated_at"]:
-        print(f"last peak too far {pair}")
+    if last_peak_time < timezone.localize(config["updated_at"]):
+        # print(f"last peak too far {pair}")
         return
 
     last_order = order_histories.find_one(
