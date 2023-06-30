@@ -12,7 +12,7 @@ load_dotenv()
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-pair = "usdjpy_5"
+pair = "eurusd_5"
 histories = db[pair]
 configs = db["configs"]
 
