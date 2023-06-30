@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from scipy.signal import find_peaks
 import logging
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from xAPIConnector import APIClient, loginCommand
 import pytz
 import requests
@@ -82,24 +82,42 @@ def macd(pair, trend):
 
     # check session EU, US
     # Lấy múi giờ +0
-    timezone = pytz.timezone("Etc/GMT")
+    timezone = pytz.timezone("UTC")
     now = datetime.now(timezone)
-    start_hour = now.replace(
-        hour=config["start_hour"].hour,
-        minute=config["start_hour"].minute,
-        second=0,
-        microsecond=0,
-    )
-    end_hour = now.replace(
-        hour=config["end_hour"].hour,
-        minute=config["end_hour"].minute,
-        second=0,
-        microsecond=0,
-    )
-    if now < start_hour or now > end_hour:
+    in_session = None
+    start_session = datetime.now(timezone)
+
+    for session in config["sessions"]:
+        # Chuyển đổi chuỗi thành đối tượng time
+        start_str, end_str = session.split("-")
+        start_time = time.fromisoformat(start_str)
+        end_time = time.fromisoformat(end_str)
+        start_session = start_session.replace(
+            hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0
+        )
+
+        # Lấy múi giờ +0 (UTC+0)
+        current_time = now.time()
+
+        # Kiểm tra xem thời gian hiện tại có nằm trong khoảng thời gian hay không
+        if start_time <= end_time:
+            if start_time <= current_time <= end_time:
+                in_session = True
+                break
+        else:
+            if start_time <= current_time:
+                in_session = True
+                break
+            if current_time <= end_time:
+                in_session = True
+                start_session = start_session - timedelta(days=1)
+                break
+
+    if in_session is None:
         # print(f"not in session {pair}")
         # not in session
         return
+    # print(f"in session {pair}", start_session)
 
     candles = histories.find().sort("ctm", -1).limit(1000)
     _candles = list(candles)
@@ -120,21 +138,15 @@ def macd(pair, trend):
         -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
 
-    print(pair, macd_peaks, macd_valleys)
-
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
 
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
 
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
-    last_peak_time_1 = last_peak_time.replace(
-        year=now.year, month=now.month, day=now.day
-    )
 
-    if last_peak_time_1 < start_hour or last_peak_time_1 > end_hour:
-        # print(f"last peak not in session {pair}")
-        # last peak not in session
+    if last_peak_time < start_session:
+        # print(f"last peak not in session {pair} {last_peak_time}")
         return
 
     last_order = order_histories.find_one(
