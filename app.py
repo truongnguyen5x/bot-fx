@@ -30,7 +30,7 @@ def update_pair(pair):
     data = request.get_json()
     timezone = pytz.timezone("UTC")
     now = datetime.now(timezone)
-    data.updated_at = now
+    data["updated_at"] = now
     db.configs.update_one({"pair": pair}, {"$set": data})
 
     return "update pair success"
