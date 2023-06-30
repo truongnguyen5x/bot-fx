@@ -97,6 +97,7 @@ def macd(pair, trend):
         microsecond=0,
     )
     if now < start_hour or now > end_hour:
+        # print(f"not in session {pair}")
         # not in session
         return
 
@@ -111,11 +112,16 @@ def macd(pair, trend):
     macd = ema_12 - ema_26
 
     # Find peaks and valleys of the MACD line
-    peaks, _ = find_peaks(
-        macd if trend == "downtrend" else -macd,
-        prominence=config["macd_prominence"],
-        distance=config["macd_distance"],
+    # Find peaks and valleys of the MACD line
+    macd_peaks, _ = find_peaks(
+        macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
+    macd_valleys, _ = find_peaks(
+        -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
+    )
+
+    peaks = macd_peaks if trend == "downtrend" else macd_valleys
+
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
 
@@ -125,6 +131,7 @@ def macd(pair, trend):
     )
 
     if last_peak_time_1 < start_hour or last_peak_time_1 > end_hour:
+        # print(f"last peak not in session {pair}")
         # last peak not in session
         return
 
