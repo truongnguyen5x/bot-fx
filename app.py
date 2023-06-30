@@ -3,6 +3,9 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
+from datetime import datetime, time, timedelta
+
+import pytz
 from bson.json_util import dumps
 
 load_dotenv()
@@ -25,6 +28,9 @@ def get_pairs():
 @app.route("/pair/<pair>", methods=["POST"])
 def update_pair(pair):
     data = request.get_json()
+    timezone = pytz.timezone("UTC")
+    now = datetime.now(timezone)
+    data.updated_at = now
     db.configs.update_one({"pair": pair}, {"$set": data})
 
     return "update pair success"
