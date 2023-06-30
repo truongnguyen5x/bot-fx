@@ -101,7 +101,7 @@ def macd(pair, trend):
         # not in session
         return
 
-    candles = histories.find().sort("ctm", -1).limit(200)
+    candles = histories.find().sort("ctm", -1).limit(1000)
     _candles = list(candles)
     _candles.reverse()
     df = pd.DataFrame(_candles)
@@ -119,6 +119,8 @@ def macd(pair, trend):
     macd_valleys, _ = find_peaks(
         -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
+
+    print(pair, macd_peaks, macd_valleys)
 
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
 
