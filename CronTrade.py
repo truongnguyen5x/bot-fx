@@ -49,10 +49,13 @@ def main():
     configs = db["configs"]
     pairs = configs.find({"enabled": True})
     check_opened_order(client)
-    for pair in pairs:
-        if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
-            macd(pair["pair"], pair["trend"])
-            pass
+    try:
+        for pair in pairs:
+            if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
+                macd(pair["pair"], pair["trend"])
+                pass
+    except Exception as e:
+        logger.error(e)
 
     mongoClient.close()
 
