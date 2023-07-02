@@ -28,6 +28,7 @@ def get_pairs():
 @app.route("/pair/<pair>", methods=["POST"])
 def update_pair(pair):
     data = request.get_json()
+    print(data)
     timezone = pytz.timezone("UTC")
     now = datetime.now(timezone)
     data["updated_at"] = now
