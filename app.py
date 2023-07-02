@@ -33,7 +33,7 @@ def update_pair(pair):
     data["updated_at"] = now
     db.configs.update_one({"pair": pair}, {"$set": data})
 
-    return "update pair success"
+    return {"status": True}
 
 
 if __name__ == "__main__":
