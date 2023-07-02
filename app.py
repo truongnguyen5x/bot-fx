@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
 from datetime import datetime, time, timedelta
 
