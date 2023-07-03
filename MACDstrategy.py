@@ -149,7 +149,11 @@ def macd(pair, trend):
         # print(f"last peak not in session {pair} {last_peak_time}")
         return
 
-    if last_peak_time < timezone.localize(config["updated_at"]):
+    if (
+        last_peak_candle["ctm"]
+        < now.timestamp() * 1000
+        - int(pair.split("_")[1]) * 60000 * config["macd_distance"] / 2
+    ):
         # print(f"last peak too far {pair}")
         return
 

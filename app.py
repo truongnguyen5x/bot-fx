@@ -28,10 +28,10 @@ def get_pairs():
 @app.route("/pair/<pair>", methods=["POST"])
 def update_pair(pair):
     data = request.get_json()
-    print(data)
-    timezone = pytz.timezone("UTC")
-    now = datetime.now(timezone)
-    data["updated_at"] = now
+
+    # timezone = pytz.timezone("UTC")
+    # now = datetime.now(timezone)
+    # data["updated_at"] = now
     db.configs.update_one({"pair": pair}, {"$set": data})
 
     return {"status": True}
