@@ -21,52 +21,6 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logger.addHandler(file_handler)
 
 
-def open_order(pair, tp, sl, lots_size, trend, digits):
-    # open order
-    userId = os.getenv("XTB_USER_ID")
-    password = os.getenv("XTB_PASSWORD")
-    client = APIClient()
-    loginResponse = client.execute(loginCommand(userId=userId, password=password))
-    if loginResponse["status"] == False:
-        print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
-        return
-    res = client.commandExecute(
-        "getSymbol",
-        {
-            "symbol": [pair.split("_")[0].upper()],
-        },
-    )
-    if res["status"] == True:
-        ask = res["returnData"]["ask"]
-        bid = res["returnData"]["bid"]
-
-        res_order = client.commandExecute(
-            "tradeTransaction",
-            {
-                "tradeTransInfo": {
-                    "cmd": 0 if trend == "uptrend" else 1,
-                    "customComment": "By MACD strategy",
-                    "expiration": 0,
-                    "order": 0,
-                    "price": ask if trend == "uptrend" else bid,
-                    "sl": round(bid - sl if trend == "uptrend" else ask + sl, digits),
-                    "tp": round(bid + tp if trend == "uptrend" else ask - tp, digits),
-                    "symbol": pair.split("_")[0].upper(),
-                    "type": 0,
-                    "volume": lots_size,
-                }
-            },
-        )
-        if res_order["status"] == True:
-            # bot.send_message(
-            #     chat_id=os.getenv("TELEGRAM_USER_ID"),
-            #     text=f"MACD strategy {pair} {trend} create order",
-            # )
-
-            order_id = res_order["returnData"]["order"]
-            return order_id
-
-
 def macd(pair, trend):
     # bot.send_message(
     #     chat_id=os.getenv("TELEGRAM_USER_ID"),
@@ -146,15 +100,7 @@ def macd(pair, trend):
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
 
     if last_peak_time < start_session:
-        # print(f"last peak not in session {pair} {last_peak_time}")
-        return
-
-    if (
-        last_peak_candle["ctm"]
-        < now.timestamp() * 1000
-        - int(pair.split("_")[1]) * 60000 * config["macd_distance"] / 2
-    ):
-        # print(f"last peak too far {pair}")
+        print(f"last peak not in session {pair} {last_peak_time}")
         return
 
     last_order = order_histories.find_one(
@@ -165,33 +111,83 @@ def macd(pair, trend):
         }
     )
 
-    if last_order is None:
-        order_id = open_order(
-            pair=pair,
-            trend=trend,
-            sl=config["sl"],
-            tp=config["tp"],
-            digits=config["digits"],
-            lots_size=config["lots_size"],
-        )
-        if order_id is not None:
-            logger.info(
-                f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
-            )
-            requests.get(
-                f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
-            )
-            order_histories.insert_one(
-                {
-                    "pair": pair,
-                    "ctm": last_peak_candle["ctm"],
-                    "ctm_str": datetime.utcfromtimestamp(
-                        last_peak_candle["ctm"] / 1000
-                    ),
-                    "from": "MACD strategy",
-                    "order_id": order_id,
-                    "status": "pending",
-                    "open_time": int(now.timestamp() * 1000),
-                    "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
-                }
-            )
+    if last_order is not None:
+        return
+    # open order
+    userId = os.getenv("XTB_USER_ID")
+    password = os.getenv("XTB_PASSWORD")
+    client = APIClient()
+    loginResponse = client.execute(loginCommand(userId=userId, password=password))
+    if loginResponse["status"] == False:
+        print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
+        return
+    res_symbol = client.commandExecute(
+        "getSymbol",
+        {
+            "symbol": [pair.split("_")[0].upper()],
+        },
+    )
+    if res_symbol["status"] == False:
+        return
+    ask = res_symbol["returnData"]["ask"]
+    bid = res_symbol["returnData"]["bid"]
+
+    print("pair")
+
+    if trend == "uptrend":
+        if ask > last_peak_candle["close"] + config["slippage"]:
+            return
+    elif trend == "downtrend":
+        if bid < last_peak_candle["close"] - config["slippage"]:
+            return
+
+    res_order = client.commandExecute(
+        "tradeTransaction",
+        {
+            "tradeTransInfo": {
+                "cmd": 0 if trend == "uptrend" else 1,
+                "customComment": "By MACD strategy",
+                "expiration": 0,
+                "order": 0,
+                "price": ask if trend == "uptrend" else bid,
+                "sl": round(
+                    bid - config["sl"] if trend == "uptrend" else ask + config["sl"],
+                    config["digits"],
+                ),
+                "tp": round(
+                    bid + config["tp"] if trend == "uptrend" else ask - config["tp"],
+                    config["digits"],
+                ),
+                "symbol": pair.split("_")[0].upper(),
+                "type": 0,
+                "volume": config["lots_size"],
+            }
+        },
+    )
+    if res_order["status"] == False:
+        return
+        # bot.send_message(
+        #     chat_id=os.getenv("TELEGRAM_USER_ID"),
+        #     text=f"MACD strategy {pair} {trend} create order",
+        # )
+
+    order_id = res_order["returnData"]["order"]
+
+    logger.info(
+        f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
+    )
+    requests.get(
+        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
+    )
+    order_histories.insert_one(
+        {
+            "pair": pair,
+            "ctm": last_peak_candle["ctm"],
+            "ctm_str": datetime.utcfromtimestamp(last_peak_candle["ctm"] / 1000),
+            "from": "MACD strategy",
+            "order_id": order_id,
+            "status": "pending",
+            "open_time": int(now.timestamp() * 1000),
+            "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
+        }
+    )
