@@ -68,7 +68,7 @@ def macd(pair, trend):
                 break
 
     if in_session is None:
-        print(f"not in session {pair}")
+        # print(f"not in session {pair}")
         # not in session
         return
     # print(f"in session {pair}", start_session)
@@ -100,7 +100,7 @@ def macd(pair, trend):
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
 
     if last_peak_time < start_session:
-        print(f"last peak not in session {pair} {last_peak_time}")
+        # print(f"last peak not in session {pair} {last_peak_time}")
         return
 
     last_order = order_histories.find_one(
@@ -131,8 +131,6 @@ def macd(pair, trend):
         return
     ask = res_symbol["returnData"]["ask"]
     bid = res_symbol["returnData"]["bid"]
-
-    print("pair")
 
     if trend == "uptrend":
         if ask > last_peak_candle["close"] + config["slippage"]:
