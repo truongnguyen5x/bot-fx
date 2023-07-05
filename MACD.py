@@ -6,20 +6,16 @@ from pymongo import MongoClient
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
+import argparse
 
 load_dotenv()
 
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
-pair = "eurusd_5"
-histories = db[pair]
-configs = db["configs"]
-
-config = configs.find_one({"pair": pair})
 
 
-def plot_candles(df):
+def plot_candles(df, config):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
 
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
@@ -132,6 +128,17 @@ def plot_candles(df):
 
 
 def main():
+    # create a parser object
+    parser = argparse.ArgumentParser(description="Collector data candle jobs")
+    parser.add_argument("timeframe", type=str, help="timeframe")
+    args = parser.parse_args()
+    pair = args.timeframe if args.timeframe is not None else "eurusd_5"
+
+    histories = db[pair]
+    configs = db["configs"]
+
+    config = configs.find_one({"pair": pair})
+
     documents = histories.find(
         {
             "ctm": {
@@ -146,7 +153,7 @@ def main():
     # data.reverse()
     # del data[-24:]
     df = pd.DataFrame(data)
-    plot_candles(df)
+    plot_candles(df, config)
 
 
 if __name__ == "__main__":
