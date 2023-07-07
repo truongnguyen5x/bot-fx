@@ -20,7 +20,7 @@ db = mongoClient["bot_fx"]
 
 @app.route("/pairs", methods=["GET"])
 def get_pairs():
-    enabled_pairs = db.configs.find({})
+    enabled_pairs = db.configs.find({}).sort("created_at", 1)
     res = dumps(list(enabled_pairs))
     return res
 
@@ -33,7 +33,7 @@ def get_close(x):
 def get_pairs_history():
     limit = int(request.args.get("limit") or "576")
     res = []
-    enabled_pairs = db.configs.find({})
+    enabled_pairs = db.configs.find({}).sort("created_at", 1)
     for p in enabled_pairs:
         candles = db[p["pair"]].find().sort("ctm", -1).limit(limit)
         _candles = list(candles)
