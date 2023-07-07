@@ -139,18 +139,18 @@ def main():
 
     config = configs.find_one({"pair": pair})
 
-    documents = histories.find(
-        {
-            "ctm": {
-                "$gt": datetime(2023, 6, 23).timestamp() * 1000,
-                "$lt": datetime(2023, 7, 28, 23).timestamp() * 1000,
-            }
-        }
-    )
-    # documents = histories.find().sort("_id", -1).limit(1000)
+    # documents = histories.find(
+    #     {
+    #         "ctm": {
+    #             "$gt": datetime(2023, 6, 23).timestamp() * 1000,
+    #             "$lt": datetime(2023, 7, 28, 23).timestamp() * 1000,
+    #         }
+    #     }
+    # )
+    documents = histories.find().sort("ctm", -1).limit(1000)
     # Convert the documents to a list of dictionaries
     data = list(documents)
-    # data.reverse()
+    data.reverse()
     # del data[-24:]
     df = pd.DataFrame(data)
     plot_candles(df, config)
