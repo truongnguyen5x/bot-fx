@@ -100,7 +100,7 @@ def macd(pair, trend):
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
 
     if last_peak_time < start_session:
-        print(f"last peak not in session {pair} {last_peak_time}")
+        print(f"last peak not in session {pair} {last_peak_time} {start_session}")
         return
 
     last_order = order_histories.find_one(
