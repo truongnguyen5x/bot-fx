@@ -31,13 +31,14 @@ def get_close(x):
 
 @app.route("/pairs-histories", methods=["GET"])
 def get_pairs_history():
-    limit = int(request.args.get("limit") or "800")
+    limit = int(request.args.get("limit") or "576")
     res = []
     enabled_pairs = db.configs.find({})
     for p in enabled_pairs:
         candles = db[p["pair"]].find().sort("ctm", -1).limit(limit)
         _candles = list(candles)
-        _candles.reverse()
+        _candles = _candles[::-8]
+        # _candles.reverse()
         res.append(list(map(get_close, _candles)))
     return dumps(res)
 
