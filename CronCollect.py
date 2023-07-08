@@ -73,14 +73,18 @@ def main():
 
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
-    client = APIClient()
-    loginResponse = client.execute(loginCommand(userId=userId, password=password))
+    try:
+        client = APIClient()
+        loginResponse = client.execute(loginCommand(userId=userId, password=password))
 
-    if loginResponse["status"] == False:
-        print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
-        return
-    for pair in list_pair:
-        collect(pair, client, args.timeframe if args.timeframe is not None else 5)
+        if loginResponse["status"] == False:
+            print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
+            return
+        for pair in list_pair:
+            collect(pair, client, args.timeframe if args.timeframe is not None else 5)
+    except Exception as e:
+        mongoClient.close()
+        logger.error(e)
     mongoClient.close()
 
 

@@ -40,21 +40,23 @@ def check_opened_order(client):
 def main():
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
-    client = APIClient()
-    loginResponse = client.execute(loginCommand(userId=userId, password=password))
-
-    if loginResponse["status"] == False:
-        print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
-        return
-    configs = db["configs"]
-    pairs = configs.find({"enabled": True})
-    check_opened_order(client)
     try:
+        client = APIClient()
+        loginResponse = client.execute(loginCommand(userId=userId, password=password))
+
+        if loginResponse["status"] == False:
+            print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
+            return
+        configs = db["configs"]
+        pairs = configs.find({"enabled": True})
+
+        check_opened_order(client)
         for pair in pairs:
             if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
                 macd(pair["pair"], pair["trend"])
                 pass
     except Exception as e:
+        mongoClient.close()
         logger.error(e)
 
     mongoClient.close()
