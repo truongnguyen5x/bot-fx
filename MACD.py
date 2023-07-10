@@ -157,6 +157,10 @@ def plot_candles(df, config):
         -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
     )
 
+    atr_peaks, _ = find_peaks(
+        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
+
     # Plot ATR valleys as '*' symbols
     fig.add_trace(
         go.Scatter(
@@ -164,6 +168,18 @@ def plot_candles(df, config):
             y=df["atr"].iloc[atr_valleys],
             mode="markers",
             marker=dict(symbol="star", size=8, color="red"),
+            name="ATR Valleys",
+        ),
+        row=3,
+        col=1,
+    )
+    # Plot ATR valleys as '*' symbols
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[atr_peaks],
+            y=df["atr"].iloc[atr_peaks],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="blue"),
             name="ATR Valleys",
         ),
         row=3,

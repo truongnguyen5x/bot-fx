@@ -78,11 +78,6 @@ def macd(pair, trend):
     _candles.reverse()
     df = pd.DataFrame(_candles)
 
-    # Calculate MACD and signal lines
-    ema_12 = df["close"].ewm(span=12, adjust=False).mean()
-    ema_26 = df["close"].ewm(span=26, adjust=False).mean()
-    macd = ema_12 - ema_26
-
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
     df["tr2"] = abs(df["high"] - df["close"].shift())
@@ -92,11 +87,24 @@ def macd(pair, trend):
 
     # Calculate ATR
     df["atr"] = df["tr"].rolling(window=14).mean()
+    # Find ATR valleys
+    atr_valleys, _ = find_peaks(
+        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
 
-    if df.iloc[-1]["atr"] > config["atr_threshold"]:
-        print(f"{pair} atr so high {df.iloc[-1]['atr']}")
+    atr_peaks, _ = find_peaks(
+        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
+    last_atr_peak = atr_peaks[-1]
+    last_atr_valley = atr_valleys[-1]
+    if last_atr_peak > last_atr_valley:
+        print(f"{pair} atr is slow down")
         return
 
+    # Calculate MACD and signal lines
+    ema_12 = df["close"].ewm(span=12, adjust=False).mean()
+    ema_26 = df["close"].ewm(span=26, adjust=False).mean()
+    macd = ema_12 - ema_26
     # Find peaks and valleys of the MACD line
     # Find peaks and valleys of the MACD line
     macd_peaks, _ = find_peaks(
