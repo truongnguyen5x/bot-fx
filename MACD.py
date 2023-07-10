@@ -194,7 +194,7 @@ def main():
     #         }
     #     }
     # )
-    documents = histories.find().sort("ctm", -1).limit(3000)
+    documents = histories.find().sort("ctm", -1).limit(1500)
     # Convert the documents to a list of dictionaries
     data = list(documents)
     data.reverse()
