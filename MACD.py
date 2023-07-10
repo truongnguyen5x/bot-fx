@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
 import argparse
 
+
 load_dotenv()
 
 # Connect to your mongodb database
@@ -18,7 +19,13 @@ db = mongoClient["bot_fx"]
 def plot_candles(df, config):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
 
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
+    fig = make_subplots(
+        rows=3,
+        cols=1,
+        shared_xaxes=True,
+        row_heights=[0.6, 0.2, 0.2],
+        vertical_spacing=0.01,
+    )
 
     # Add a candlestick trace to the first subplot (row=1, col=1)
     fig.add_trace(
@@ -123,6 +130,46 @@ def plot_candles(df, config):
     )
     fig.add_bar(x=df.index, y=macd - signal, name="Histogram", row=2, col=1)
 
+    # Calculate True Range (TR)
+    df["tr1"] = df["high"] - df["low"]
+    df["tr2"] = abs(df["high"] - df["close"].shift())
+    df["tr3"] = abs(df["low"] - df["close"].shift())
+    df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
+    df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
+
+    # Calculate ATR
+    df["atr"] = df["tr"].rolling(window=14).mean()
+
+    # Add ATR to the third subplot (row=3, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df["atr"],
+            line=dict(color="purple", width=1.5),
+            name="ATR",
+        ),
+        row=3,
+        col=1,
+    )
+
+    # Find ATR valleys
+    atr_valleys, _ = find_peaks(
+        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
+
+    # Plot ATR valleys as '*' symbols
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[atr_valleys],
+            y=df["atr"].iloc[atr_valleys],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="red"),
+            name="ATR Valleys",
+        ),
+        row=3,
+        col=1,
+    )
+    fig.update_layout(xaxis_rangeslider_visible=False)
     # Show the figure
     fig.show()
 
@@ -147,7 +194,7 @@ def main():
     #         }
     #     }
     # )
-    documents = histories.find().sort("ctm", -1).limit(1000)
+    documents = histories.find().sort("ctm", -1).limit(3000)
     # Convert the documents to a list of dictionaries
     data = list(documents)
     data.reverse()
