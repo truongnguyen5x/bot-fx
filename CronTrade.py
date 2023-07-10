@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
 import logging
-from MACDstrategy import macd
+from MACDstrategyATR import macd
 import os
 from xAPIConnector import APIClient, loginCommand
 
