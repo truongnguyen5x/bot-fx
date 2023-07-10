@@ -94,7 +94,7 @@ def macd(pair, trend):
     df["atr"] = df["tr"].rolling(window=14).mean()
 
     if df.iloc[-1]["atr"] > config["atr_threshold"]:
-        print(f"{pair} atr so high")
+        print(f"{pair} atr so high {df.iloc[-1]['atr']}")
         return
 
     # Find peaks and valleys of the MACD line
