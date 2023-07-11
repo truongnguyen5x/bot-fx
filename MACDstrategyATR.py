@@ -136,7 +136,7 @@ def macd(pair, trend):
     )
 
     if last_order is not None:
-        reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} has last order"
+        reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
