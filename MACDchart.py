@@ -212,7 +212,7 @@ def plot_candles(df, config):
     ) * 100
 
     # Calculate Average Directional Index (ADX)
-    df["adx"] = df["dx"].rolling(window=14).mean()
+    df["adx"] = df["dx"].rolling(window=40).mean()
 
     # Add ADX to the fourth subplot (row=4, col=1)
     fig.add_trace(
@@ -225,6 +225,40 @@ def plot_candles(df, config):
         row=4,
         col=1,
     )
+    # Find ATR valleys
+    adx_valleys, _ = find_peaks(
+        -df["adx"], distance=config["adx_distance"], prominence=config["adx_prominence"]
+    )
+
+    adx_peaks, _ = find_peaks(
+        df["adx"], distance=config["adx_distance"], prominence=config["adx_prominence"]
+    )
+
+    # Plot ATR valleys as '*' symbols
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[adx_valleys],
+            y=df["adx"].iloc[adx_valleys],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="red"),
+            name="adx Valleys",
+        ),
+        row=4,
+        col=1,
+    )
+    # Plot ATR valleys as '*' symbols
+    fig.add_trace(
+        go.Scatter(
+            x=df.index[adx_peaks],
+            y=df["adx"].iloc[adx_peaks],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="blue"),
+            name="adx Valleys",
+        ),
+        row=4,
+        col=1,
+    )
+
     fig.update_layout(xaxis_rangeslider_visible=False)
     # Show the figure
     fig.show()
