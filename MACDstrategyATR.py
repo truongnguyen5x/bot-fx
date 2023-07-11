@@ -68,10 +68,10 @@ def macd(pair, trend):
                 break
 
     if in_session is None:
-        print(f"{pair} not in session")
-        # not in session
+        reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} not in session"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
-    # print(f"in session {pair}", start_session)
 
     candles = histories.find().sort("ctm", -1).limit(1000)
     _candles = list(candles)
@@ -99,8 +99,11 @@ def macd(pair, trend):
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
 
     if last_peak_time < start_session:
-        print(f"{pair} last peak not in session {last_peak_time} {start_session}")
+        reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} last peak not in session {last_peak_time} {start_session}"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
+
         # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
     df["tr2"] = abs(df["high"] - df["close"].shift())
@@ -121,7 +124,7 @@ def macd(pair, trend):
     last_atr_peak = atr_peaks[-1]
     last_atr_valley = atr_valleys[-1]
     if last_atr_peak > last_atr_valley:
-        print(f"{pair} atr is slow down")
+        print(f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} atr is slow down")
         return
 
     last_order = order_histories.find_one(
@@ -133,7 +136,9 @@ def macd(pair, trend):
     )
 
     if last_order is not None:
-        print(f"{pair} has last order")
+        reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} has last order"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
     # open order
     userId = os.getenv("XTB_USER_ID")
@@ -156,11 +161,15 @@ def macd(pair, trend):
 
     if trend == "uptrend":
         if ask > last_peak_candle["close"] + config["slippage"]:
-            print(f"{pair} buy slippage show far")
+            reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} buy slippage show far {round(ask - last_peak_candle['close'], config['digits'])}"
+            print(reason)
+            configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
             return
     elif trend == "downtrend":
         if bid < last_peak_candle["close"] - config["slippage"]:
-            print(f"{pair} sell slippage show far")
+            reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} sell slippage show far {round(last_peak_candle['close'] - bid, config['digits'])}"
+            print(reason)
+            configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
             return
 
     res_order = client.commandExecute(
