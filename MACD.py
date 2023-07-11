@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
 import argparse
-
+import numpy as np
 
 load_dotenv()
 
@@ -20,10 +20,10 @@ def plot_candles(df, config):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
 
     fig = make_subplots(
-        rows=3,
+        rows=4,
         cols=1,
         shared_xaxes=True,
-        row_heights=[0.6, 0.2, 0.2],
+        row_heights=[0.4, 0.2, 0.2, 0.2],
         vertical_spacing=0.01,
     )
 
@@ -183,6 +183,46 @@ def plot_candles(df, config):
             name="ATR Valleys",
         ),
         row=3,
+        col=1,
+    )
+
+    # Calculate Directional Movement (DM)
+    df["up_move"] = df["high"].diff()
+    df["down_move"] = -df["low"].diff()
+
+    # Calculate Positive Directional Index (+DI) and Negative Directional Index (-DI)
+    df["plus_dm"] = np.where(
+        (df["up_move"] > df["down_move"]) & (df["up_move"] > 0), df["up_move"], 0
+    )
+    df["minus_dm"] = np.where(
+        (df["down_move"] > df["up_move"]) & (df["down_move"] > 0), df["down_move"], 0
+    )
+
+    df["tr14"] = df["tr"].rolling(window=14).sum()
+    df["plus_dm14"] = df["plus_dm"].rolling(window=14).sum()
+    df["minus_dm14"] = df["minus_dm"].rolling(window=14).sum()
+
+    # Calculate Plus Directional Indicator (+DI) and Minus Directional Indicator (-DI)
+    df["plus_di"] = (df["plus_dm14"] / df["tr14"]) * 100
+    df["minus_di"] = (df["minus_dm14"] / df["tr14"]) * 100
+
+    # Calculate Directional Movement Index (DX)
+    df["dx"] = (
+        abs(df["plus_di"] - df["minus_di"]) / (df["plus_di"] + df["minus_di"])
+    ) * 100
+
+    # Calculate Average Directional Index (ADX)
+    df["adx"] = df["dx"].rolling(window=14).mean()
+
+    # Add ADX to the fourth subplot (row=4, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df["adx"],
+            line=dict(color="green", width=1.5),
+            name="ADX",
+        ),
+        row=4,
         col=1,
     )
     fig.update_layout(xaxis_rangeslider_visible=False)
