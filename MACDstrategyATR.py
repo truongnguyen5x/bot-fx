@@ -78,29 +78,6 @@ def macd(pair, trend):
     _candles.reverse()
     df = pd.DataFrame(_candles)
 
-    # Calculate True Range (TR)
-    df["tr1"] = df["high"] - df["low"]
-    df["tr2"] = abs(df["high"] - df["close"].shift())
-    df["tr3"] = abs(df["low"] - df["close"].shift())
-    df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
-    df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
-
-    # Calculate ATR
-    df["atr"] = df["tr"].rolling(window=14).mean()
-    # Find ATR valleys
-    atr_valleys, _ = find_peaks(
-        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
-
-    atr_peaks, _ = find_peaks(
-        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
-    last_atr_peak = atr_peaks[-1]
-    last_atr_valley = atr_valleys[-1]
-    if last_atr_peak > last_atr_valley:
-        print(f"{pair} atr is slow down")
-        return
-
     # Calculate MACD and signal lines
     ema_12 = df["close"].ewm(span=12, adjust=False).mean()
     ema_26 = df["close"].ewm(span=26, adjust=False).mean()
@@ -123,6 +100,28 @@ def macd(pair, trend):
 
     if last_peak_time < start_session:
         print(f"last peak not in session {pair} {last_peak_time} {start_session}")
+        return
+        # Calculate True Range (TR)
+    df["tr1"] = df["high"] - df["low"]
+    df["tr2"] = abs(df["high"] - df["close"].shift())
+    df["tr3"] = abs(df["low"] - df["close"].shift())
+    df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
+    df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
+
+    # Calculate ATR
+    df["atr"] = df["tr"].rolling(window=14).mean()
+    # Find ATR valleys
+    atr_valleys, _ = find_peaks(
+        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
+
+    atr_peaks, _ = find_peaks(
+        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    )
+    last_atr_peak = atr_peaks[-1]
+    last_atr_valley = atr_valleys[-1]
+    if last_atr_peak > last_atr_valley:
+        print(f"{pair} atr is slow down")
         return
 
     last_order = order_histories.find_one(
