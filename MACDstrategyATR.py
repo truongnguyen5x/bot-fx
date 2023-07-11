@@ -68,7 +68,7 @@ def macd(pair, trend):
                 break
 
     if in_session is None:
-        print(f"not in session {pair}")
+        print(f"{pair} not in session")
         # not in session
         return
     # print(f"in session {pair}", start_session)
@@ -99,7 +99,7 @@ def macd(pair, trend):
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
 
     if last_peak_time < start_session:
-        print(f"last peak not in session {pair} {last_peak_time} {start_session}")
+        print(f"{pair} last peak not in session {last_peak_time} {start_session}")
         return
         # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
@@ -133,7 +133,7 @@ def macd(pair, trend):
     )
 
     if last_order is not None:
-        print(f"has last order {pair}")
+        print(f"{pair} has last order")
         return
     # open order
     userId = os.getenv("XTB_USER_ID")
@@ -156,11 +156,11 @@ def macd(pair, trend):
 
     if trend == "uptrend":
         if ask > last_peak_candle["close"] + config["slippage"]:
-            print(f"buy slippage show far {pair}")
+            print(f"{pair} buy slippage show far")
             return
     elif trend == "downtrend":
         if bid < last_peak_candle["close"] - config["slippage"]:
-            print(f"sell slippage show far {pair}")
+            print(f"{pair} sell slippage show far")
             return
 
     res_order = client.commandExecute(
