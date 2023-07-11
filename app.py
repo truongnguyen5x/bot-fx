@@ -37,8 +37,8 @@ def get_pairs_history():
     for p in enabled_pairs:
         candles = db[p["pair"]].find().sort("ctm", -1).limit(limit)
         _candles = list(candles)
-        _candles = _candles[::-8]
-        # _candles.reverse()
+        # _candles = _candles[::-8]
+        _candles.reverse()
         res.append(list(map(get_close, _candles)))
     return dumps(res)
 
