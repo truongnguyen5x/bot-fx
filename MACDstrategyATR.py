@@ -117,7 +117,7 @@ def macd(pair, trend):
     # check order opened is that peak
     last_order = order_histories.find_one(
         {
-            "pair": pair,
+            "pair": pair.split("_")[0],
             "ctm": {"$gte": last_peak_candle["ctm"]},
             "status": {"$in": ["accepted", "pending"]},
         }
@@ -197,7 +197,8 @@ def macd(pair, trend):
     )
     order_histories.insert_one(
         {
-            "pair": pair,
+            "pair": pair.split("_")[0],
+            "timeframe": int(pair.split("_")[1]),
             "ctm": last_peak_candle["ctm"],
             "ctm_str": datetime.utcfromtimestamp(last_peak_candle["ctm"] / 1000),
             "from": "MACD strategy",
