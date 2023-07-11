@@ -11,7 +11,6 @@ import requests
 
 load_dotenv()
 
-
 # Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -22,12 +21,7 @@ logger.addHandler(file_handler)
 
 
 def macd(pair, trend):
-    # bot.send_message(
-    #     chat_id=os.getenv("TELEGRAM_USER_ID"),
-    #     text=f"MACD strategy {pair} {trend} create order",
-    # )
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
-
     db = mongoClient["bot_fx"]
     order_histories = db["orders"]
     histories = db[pair]
@@ -49,10 +43,8 @@ def macd(pair, trend):
         start_session = start_session.replace(
             hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0
         )
-
         # Lấy múi giờ +0 (UTC+0)
         current_time = now.time()
-
         # Kiểm tra xem thời gian hiện tại có nằm trong khoảng thời gian hay không
         if start_time <= end_time:
             if start_time <= current_time <= end_time:
@@ -66,7 +58,6 @@ def macd(pair, trend):
                 in_session = True
                 start_session = start_session - timedelta(days=1)
                 break
-
     if in_session is None:
         reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} not in session"
         print(reason)
@@ -90,21 +81,17 @@ def macd(pair, trend):
     macd_valleys, _ = find_peaks(
         -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
-
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
-
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
-
     last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
-
     if last_peak_time < start_session:
         reason = f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} last peak not in session {last_peak_time} {start_session}"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
 
-        # Calculate True Range (TR)
+    # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
     df["tr2"] = abs(df["high"] - df["close"].shift())
     df["tr3"] = abs(df["low"] - df["close"].shift())
@@ -127,6 +114,7 @@ def macd(pair, trend):
         print(f"[{now.strftime('%d/%m/%Y %H:%M:%S')}] {pair} atr is slow down")
         return
 
+    # check order opened is that peak
     last_order = order_histories.find_one(
         {
             "pair": pair,
@@ -140,7 +128,8 @@ def macd(pair, trend):
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
-    # open order
+
+    # login to get bid, ask
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
     client = APIClient()
@@ -171,7 +160,7 @@ def macd(pair, trend):
             print(reason)
             configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
             return
-
+    # open order
     res_order = client.commandExecute(
         "tradeTransaction",
         {
@@ -197,10 +186,6 @@ def macd(pair, trend):
     )
     if res_order["status"] == False:
         return
-        # bot.send_message(
-        #     chat_id=os.getenv("TELEGRAM_USER_ID"),
-        #     text=f"MACD strategy {pair} {trend} create order",
-        # )
 
     order_id = res_order["returnData"]["order"]
 
