@@ -260,6 +260,14 @@ def plot_candles(df, config):
     )
 
     fig.update_layout(xaxis_rangeslider_visible=False)
+    fig.update_xaxes(
+        showspikes=True,
+        spikecolor="red",
+        spikesnap="cursor",
+        spikemode="across",
+        spikedash="solid",
+    )
+    fig.update_traces(xaxis="x1")
     # Show the figure
     fig.show()
 
