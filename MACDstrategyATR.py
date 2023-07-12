@@ -101,17 +101,22 @@ def macd(pair, trend):
     # Calculate ATR
     df["atr"] = df["tr"].rolling(window=14).mean()
     # Find ATR valleys
-    atr_valleys, _ = find_peaks(
-        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
+    # atr_valleys, _ = find_peaks(
+    #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    # )
 
-    atr_peaks, _ = find_peaks(
-        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
-    last_atr_peak = atr_peaks[-1]
-    last_atr_valley = atr_valleys[-1]
-    if last_atr_peak > last_atr_valley:
-        print(f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is slow down")
+    # atr_peaks, _ = find_peaks(
+    #     df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    # )
+    # last_atr_peak = atr_peaks[-1]
+    # last_atr_valley = atr_valleys[-1]
+    # if last_atr_peak > last_atr_valley:
+    #     print(f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is slow down")
+    #     return
+    if df.iloc[-1]["atr"] > config["atr_threshold"]:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {df.iloc[-1]['atr']} > {config['atr_threshold']}"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
 
     # check order opened is that peak
