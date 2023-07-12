@@ -268,6 +268,7 @@ def main():
     # create a parser object
     parser = argparse.ArgumentParser(description="Collector data candle jobs")
     parser.add_argument("timeframe", type=str, help="timeframe")
+    parser.add_argument("-o", "--offset", type=int, help="offset")
     args = parser.parse_args()
     pair = args.timeframe if args.timeframe is not None else "eurusd_5"
 
@@ -284,7 +285,12 @@ def main():
     #         }
     #     }
     # )
-    documents = histories.find().sort("ctm", -1).limit(1500)
+    documents = (
+        histories.find()
+        .sort("ctm", -1)
+        .skip(args.offset if args.offset is not None else 0)
+        .limit(1500)
+    )
     # Convert the documents to a list of dictionaries
     data = list(documents)
     data.reverse()
