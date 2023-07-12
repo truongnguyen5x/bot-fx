@@ -90,6 +90,12 @@ def macd(pair, trend):
     #     print(reason)
     #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
     #     return
+    # print(last_peak_index, len(_candles) - config["macd_distance"] / 2)
+    if last_peak_index < len(_candles) - config["macd_distance"] / 2 - 20:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak so far {last_peak_index} {len(_candles)}"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+        return
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
