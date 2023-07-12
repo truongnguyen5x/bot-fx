@@ -32,37 +32,37 @@ def macd(pair, trend):
     # Lấy múi giờ +0
     timezone = pytz.timezone("UTC")
     now = datetime.now(timezone)
-    in_session = None
-    start_session = datetime.now(timezone)
+    # in_session = None
+    # start_session = datetime.now(timezone)
 
-    for session in config["sessions"]:
-        # Chuyển đổi chuỗi thành đối tượng time
-        start_str, end_str = session.split("-")
-        start_time = time.fromisoformat(start_str)
-        end_time = time.fromisoformat(end_str)
-        start_session = start_session.replace(
-            hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0
-        )
-        # Lấy múi giờ +0 (UTC+0)
-        current_time = now.time()
-        # Kiểm tra xem thời gian hiện tại có nằm trong khoảng thời gian hay không
-        if start_time <= end_time:
-            if start_time <= current_time <= end_time:
-                in_session = True
-                break
-        else:
-            if start_time <= current_time:
-                in_session = True
-                break
-            if current_time <= end_time:
-                in_session = True
-                start_session = start_session - timedelta(days=1)
-                break
-    if in_session is None:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} not in session"
-        print(reason)
-        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-        return
+    # for session in config["sessions"]:
+    #     # Chuyển đổi chuỗi thành đối tượng time
+    #     start_str, end_str = session.split("-")
+    #     start_time = time.fromisoformat(start_str)
+    #     end_time = time.fromisoformat(end_str)
+    #     start_session = start_session.replace(
+    #         hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0
+    #     )
+    #     # Lấy múi giờ +0 (UTC+0)
+    #     current_time = now.time()
+    #     # Kiểm tra xem thời gian hiện tại có nằm trong khoảng thời gian hay không
+    #     if start_time <= end_time:
+    #         if start_time <= current_time <= end_time:
+    #             in_session = True
+    #             break
+    #     else:
+    #         if start_time <= current_time:
+    #             in_session = True
+    #             break
+    #         if current_time <= end_time:
+    #             in_session = True
+    #             start_session = start_session - timedelta(days=1)
+    #             break
+    # if in_session is None:
+    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} not in session"
+    #     print(reason)
+    #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+    #     return
 
     candles = histories.find().sort("ctm", -1).limit(1000)
     _candles = list(candles)
@@ -84,12 +84,12 @@ def macd(pair, trend):
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
-    last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
-    if last_peak_time < start_session:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak not in session {last_peak_time} {start_session}"
-        print(reason)
-        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-        return
+    # last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
+    # if last_peak_time < start_session:
+    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak not in session {last_peak_time} {start_session}"
+    #     print(reason)
+    #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+    #     return
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]

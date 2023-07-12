@@ -16,14 +16,27 @@ mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
 db = mongoClient["bot_fx"]
 
 
+def calculate_rsi(prices, window=14):
+    delta = prices.diff()
+    up = delta.copy()
+    down = delta.copy()
+    up[up < 0] = 0
+    down[down > 0] = 0
+    average_gain = up.rolling(window).mean()
+    average_loss = abs(down.rolling(window).mean())
+    relative_strength = average_gain / average_loss
+    rsi = 100.0 - (100.0 / (1.0 + relative_strength))
+    return rsi
+
+
 def plot_candles(df, config):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
 
     fig = make_subplots(
-        rows=3,
+        rows=4,
         cols=1,
         shared_xaxes=True,
-        row_heights=[0.6, 0.2, 0.2],
+        row_heights=[0.4, 0.2, 0.2, 0.2],
         vertical_spacing=0.01,
     )
 
@@ -78,32 +91,6 @@ def plot_candles(df, config):
             name="MACD Valleys",
         ),
         row=2,
-        col=1,
-    )
-
-    # Plot MACD peaks as '*' symbols on the candlestick chart
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[macd_peaks],
-            y=df["high"].iloc[macd_peaks],
-            mode="markers",
-            marker=dict(symbol="star", size=8, color="black"),
-            name="MACD Peaks",
-        ),
-        row=1,
-        col=1,
-    )
-
-    # Plot MACD valleys as '*' symbols on the candlestick chart
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[macd_valleys],
-            y=df["low"].iloc[macd_valleys],
-            mode="markers",
-            marker=dict(symbol="star", size=8, color="black"),
-            name="MACD Valleys",
-        ),
-        row=1,
         col=1,
     )
 
@@ -183,81 +170,22 @@ def plot_candles(df, config):
         row=3,
         col=1,
     )
+    # Calculate RSI
+    rsi = calculate_rsi(df["close"], window=14)
 
-    # Calculate Directional Movement (DM)
-    df["up_move"] = df["high"].diff()
-    df["down_move"] = -df["low"].diff()
-
-    # Calculate Positive Directional Index (+DI) and Negative Directional Index (-DI)
-    df["plus_dm"] = np.where(
-        (df["up_move"] > df["down_move"]) & (df["up_move"] > 0), df["up_move"], 0
+    # Add RSI to the fourth subplot (row=4, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=rsi,
+            line=dict(color="green", width=1.5),
+            name="RSI",
+        ),
+        row=4,
+        col=1,
     )
-    df["minus_dm"] = np.where(
-        (df["down_move"] > df["up_move"]) & (df["down_move"] > 0), df["down_move"], 0
-    )
-
-    df["tr14"] = df["tr"].rolling(window=14).sum()
-    df["plus_dm14"] = df["plus_dm"].rolling(window=14).sum()
-    df["minus_dm14"] = df["minus_dm"].rolling(window=14).sum()
-
-    # Calculate Plus Directional Indicator (+DI) and Minus Directional Indicator (-DI)
-    df["plus_di"] = (df["plus_dm14"] / df["tr14"]) * 100
-    df["minus_di"] = (df["minus_dm14"] / df["tr14"]) * 100
-
-    # Calculate Directional Movement Index (DX)
-    df["dx"] = (
-        abs(df["plus_di"] - df["minus_di"]) / (df["plus_di"] + df["minus_di"])
-    ) * 100
-
-    # Calculate Average Directional Index (ADX)
-    df["adx"] = df["dx"].rolling(window=40).mean()
-
-    # # Add ADX to the fourth subplot (row=4, col=1)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index,
-    #         y=df["adx"],
-    #         line=dict(color="green", width=1.5),
-    #         name="ADX",
-    #     ),
-    #     row=4,
-    #     col=1,
-    # )
-    # # Find ATR valleys
-    # adx_valleys, _ = find_peaks(
-    #     -df["adx"], distance=config["adx_distance"], prominence=config["adx_prominence"]
-    # )
-
-    # adx_peaks, _ = find_peaks(
-    #     df["adx"], distance=config["adx_distance"], prominence=config["adx_prominence"]
-    # )
-
-    # # Plot ATR valleys as '*' symbols
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index[adx_valleys],
-    #         y=df["adx"].iloc[adx_valleys],
-    #         mode="markers",
-    #         marker=dict(symbol="star", size=8, color="red"),
-    #         name="adx Valleys",
-    #     ),
-    #     row=4,
-    #     col=1,
-    # )
-    # # Plot ATR valleys as '*' symbols
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index[adx_peaks],
-    #         y=df["adx"].iloc[adx_peaks],
-    #         mode="markers",
-    #         marker=dict(symbol="star", size=8, color="blue"),
-    #         name="adx Valleys",
-    #     ),
-    #     row=4,
-    #     col=1,
-    # )
-
     fig.update_layout(xaxis_rangeslider_visible=False)
+
     fig.update_xaxes(
         showspikes=True,
         spikecolor="red",
@@ -265,6 +193,7 @@ def plot_candles(df, config):
         spikemode="across",
         spikedash="solid",
     )
+
     fig.update_traces(xaxis="x1")
     # Show the figure
     fig.show()
