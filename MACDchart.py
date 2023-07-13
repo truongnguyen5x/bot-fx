@@ -172,7 +172,7 @@ def plot_candles(df, config):
     )
     # Calculate RSI
     rsi = calculate_rsi(df["close"], window=14)
-
+    rsi_ema = rsi.ewm(span=9, adjust=False).mean()
     # Add RSI to the fourth subplot (row=4, col=1)
     fig.add_trace(
         go.Scatter(
@@ -180,6 +180,16 @@ def plot_candles(df, config):
             y=rsi,
             line=dict(color="green", width=1.5),
             name="RSI",
+        ),
+        row=4,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=rsi_ema,
+            line=dict(color="blue", width=2),
+            name="RSI EMA",
         ),
         row=4,
         col=1,
@@ -224,7 +234,7 @@ def main():
         histories.find()
         .sort("ctm", -1)
         .skip(args.offset if args.offset is not None else 0)
-        .limit(1500)
+        .limit(2500)
     )
     # Convert the documents to a list of dictionaries
     data = list(documents)
