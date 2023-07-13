@@ -172,24 +172,26 @@ def plot_candles(df, config):
     )
     # Calculate RSI
     rsi = calculate_rsi(df["close"], window=14)
-    rsi_ema = rsi.ewm(span=9, adjust=False).mean()
+    rsi_peaks, _ = find_peaks(-rsi, distance=30, prominence=20, threshold=0)
     # Add RSI to the fourth subplot (row=4, col=1)
     fig.add_trace(
         go.Scatter(
             x=df.index,
             y=rsi,
-            line=dict(color="green", width=1.5),
+            line=dict(color="green", width=1),
             name="RSI",
         ),
         row=4,
         col=1,
     )
+    # Plot RSI valleys as '*' symbols
     fig.add_trace(
         go.Scatter(
-            x=df.index,
-            y=rsi_ema,
-            line=dict(color="blue", width=2),
-            name="RSI EMA",
+            x=df.index[rsi_peaks],
+            y=rsi.iloc[rsi_peaks],
+            mode="markers",
+            marker=dict(symbol="star", size=8, color="red"),
+            name="RSI Valleys",
         ),
         row=4,
         col=1,
@@ -234,7 +236,7 @@ def main():
         histories.find()
         .sort("ctm", -1)
         .skip(args.offset if args.offset is not None else 0)
-        .limit(2500)
+        .limit(1500)
     )
     # Convert the documents to a list of dictionaries
     data = list(documents)
