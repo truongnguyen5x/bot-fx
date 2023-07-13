@@ -115,8 +115,9 @@ def macd(pair, trend):
     # if last_atr_peak > last_atr_valley:
     #     print(f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is slow down")
     #     return
-    if df.iloc[-1]["atr"] > config["atr_threshold"]:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {df.iloc[-1]['atr']} > {config['atr_threshold']}"
+    min_atr = df.iloc[last_peak_index:-1]["atr"].min()
+    if min_atr > config["atr_threshold"]:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {min_atr} > {config['atr_threshold']}"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
