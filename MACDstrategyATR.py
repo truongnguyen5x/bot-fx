@@ -103,6 +103,7 @@ def macd(pair, trend):
     df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
     # Calculate ATR
     df["atr"] = df["tr"].rolling(window=14).mean()
+    df["atr_min"] = df["atr"].rolling(14).min()
     # Find ATR valleys
     # atr_valleys, _ = find_peaks(
     #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
@@ -115,9 +116,9 @@ def macd(pair, trend):
     # if last_atr_peak > last_atr_valley:
     #     print(f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is slow down")
     #     return
-    min_atr = df.iloc[last_peak_index:-1]["atr"].min()
-    if min_atr > config["atr_threshold"]:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {min_atr} > {config['atr_threshold']}"
+
+    if df.iloc[-1]["atr_min"] > config["atr_threshold"]:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {df.iloc[-1]['atr_min']} > {config['atr_threshold']}"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
@@ -166,6 +167,7 @@ def macd(pair, trend):
             print(reason)
             configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
             return
+
     # open order
     res_order = client.commandExecute(
         "tradeTransaction",
