@@ -11,7 +11,6 @@ import requests
 
 load_dotenv()
 
-# Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
@@ -74,7 +73,6 @@ def macd(pair, trend):
     ema_26 = df["close"].ewm(span=26, adjust=False).mean()
     macd = ema_12 - ema_26
     # Find peaks and valleys of the MACD line
-    # Find peaks and valleys of the MACD line
     macd_peaks, _ = find_peaks(
         macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
@@ -82,6 +80,7 @@ def macd(pair, trend):
         -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
+    valleys = macd_valleys if trend == "downtrend" else macd_peaks
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
     # last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
@@ -90,9 +89,8 @@ def macd(pair, trend):
     #     print(reason)
     #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
     #     return
-    # print(last_peak_index, len(_candles) - config["macd_distance"] / 2)
-    if last_peak_index < len(_candles) - config["macd_distance"]:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak so far {last_peak_index} {len(_candles)}"
+    if last_peak_index < valleys[-1]:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak so far {last_peak_index} < {valleys[-1]}"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
@@ -103,14 +101,12 @@ def macd(pair, trend):
     df["tr3"] = abs(df["low"] - df["close"].shift())
     df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
     df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
-
     # Calculate ATR
     df["atr"] = df["tr"].rolling(window=14).mean()
     # Find ATR valleys
     # atr_valleys, _ = find_peaks(
     #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
     # )
-
     # atr_peaks, _ = find_peaks(
     #     df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
     # )
@@ -133,7 +129,6 @@ def macd(pair, trend):
             "status": {"$in": ["accepted", "pending"]},
         }
     )
-
     if last_order is not None:
         reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
         print(reason)
@@ -158,7 +153,6 @@ def macd(pair, trend):
         return
     ask = res_symbol["returnData"]["ask"]
     bid = res_symbol["returnData"]["bid"]
-
     if trend == "uptrend":
         if ask > last_peak_candle["close"] + config["slippage"]:
             reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} buy slippage show far {round(ask - last_peak_candle['close'], config['digits'])}"
@@ -197,9 +191,7 @@ def macd(pair, trend):
     )
     if res_order["status"] == False:
         return
-
     order_id = res_order["returnData"]["order"]
-
     logger.info(
         f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
     )
