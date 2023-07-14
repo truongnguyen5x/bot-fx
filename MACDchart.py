@@ -33,10 +33,10 @@ def plot_candles(df, config):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
 
     fig = make_subplots(
-        rows=4,
+        rows=3,
         cols=1,
         shared_xaxes=True,
-        row_heights=[0.4, 0.2, 0.2, 0.2],
+        row_heights=[0.6, 0.2, 0.2],
         vertical_spacing=0.01,
     )
 
@@ -174,28 +174,28 @@ def plot_candles(df, config):
     rsi = calculate_rsi(df["close"], window=14)
     rsi_peaks, _ = find_peaks(-rsi, distance=30, prominence=20, threshold=0)
     # Add RSI to the fourth subplot (row=4, col=1)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index,
-            y=rsi,
-            line=dict(color="green", width=1),
-            name="RSI",
-        ),
-        row=4,
-        col=1,
-    )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index,
+    #         y=rsi,
+    #         line=dict(color="green", width=1),
+    #         name="RSI",
+    #     ),
+    #     row=4,
+    #     col=1,
+    # )
     # Plot RSI valleys as '*' symbols
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[rsi_peaks],
-            y=rsi.iloc[rsi_peaks],
-            mode="markers",
-            marker=dict(symbol="star", size=8, color="red"),
-            name="RSI Valleys",
-        ),
-        row=4,
-        col=1,
-    )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index[rsi_peaks],
+    #         y=rsi.iloc[rsi_peaks],
+    #         mode="markers",
+    #         marker=dict(symbol="star", size=8, color="red"),
+    #         name="RSI Valleys",
+    #     ),
+    #     row=4,
+    #     col=1,
+    # )
     fig.update_layout(xaxis_rangeslider_visible=False)
 
     fig.update_xaxes(
