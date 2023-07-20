@@ -19,6 +19,60 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logger.addHandler(file_handler)
 
 
+def open_order(
+    client, trend, ask, bid, config, pair, last_peak_candle, order_histories
+):
+    # Lấy múi giờ +0
+    timezone = pytz.timezone("UTC")
+    now = datetime.now(timezone)
+    # open order
+    res_order = client.commandExecute(
+        "tradeTransaction",
+        {
+            "tradeTransInfo": {
+                "cmd": 0 if trend == "uptrend" else 1,
+                "customComment": "By MACD strategy",
+                "expiration": 0,
+                "order": 0,
+                "price": ask if trend == "uptrend" else bid,
+                "sl": round(
+                    bid - config["sl"] if trend == "uptrend" else ask + config["sl"],
+                    config["digits"],
+                ),
+                "tp": round(
+                    bid + config["tp"] if trend == "uptrend" else ask - config["tp"],
+                    config["digits"],
+                ),
+                "symbol": pair.split("_")[0].upper(),
+                "type": 0,
+                "volume": config["lots_size"],
+            }
+        },
+    )
+    if res_order["status"] == False:
+        return
+    order_id = res_order["returnData"]["order"]
+    logger.info(
+        f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
+    )
+    requests.get(
+        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
+    )
+    order_histories.insert_one(
+        {
+            "pair": pair.split("_")[0],
+            "timeframe": int(pair.split("_")[1]),
+            "ctm": last_peak_candle["ctm"],
+            "ctm_str": datetime.utcfromtimestamp(last_peak_candle["ctm"] / 1000),
+            "from": "MACD strategy",
+            "order_id": order_id,
+            "status": "pending",
+            "open_time": int(now.timestamp() * 1000),
+            "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
+        }
+    )
+
+
 def macd(pair, trend):
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
     db = mongoClient["bot_fx"]
@@ -168,49 +222,13 @@ def macd(pair, trend):
             configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
             return
 
-    # open order
-    res_order = client.commandExecute(
-        "tradeTransaction",
-        {
-            "tradeTransInfo": {
-                "cmd": 0 if trend == "uptrend" else 1,
-                "customComment": "By MACD strategy",
-                "expiration": 0,
-                "order": 0,
-                "price": ask if trend == "uptrend" else bid,
-                "sl": round(
-                    bid - config["sl"] if trend == "uptrend" else ask + config["sl"],
-                    config["digits"],
-                ),
-                "tp": round(
-                    bid + config["tp"] if trend == "uptrend" else ask - config["tp"],
-                    config["digits"],
-                ),
-                "symbol": pair.split("_")[0].upper(),
-                "type": 0,
-                "volume": config["lots_size"],
-            }
-        },
-    )
-    if res_order["status"] == False:
-        return
-    order_id = res_order["returnData"]["order"]
-    logger.info(
-        f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
-    )
-    requests.get(
-        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
-    )
-    order_histories.insert_one(
-        {
-            "pair": pair.split("_")[0],
-            "timeframe": int(pair.split("_")[1]),
-            "ctm": last_peak_candle["ctm"],
-            "ctm_str": datetime.utcfromtimestamp(last_peak_candle["ctm"] / 1000),
-            "from": "MACD strategy",
-            "order_id": order_id,
-            "status": "pending",
-            "open_time": int(now.timestamp() * 1000),
-            "open_time_str": datetime.utcfromtimestamp(int(now.timestamp())),
-        }
+    open_order(
+        client=client,
+        trend=trend,
+        ask=ask,
+        bid=bid,
+        config=config,
+        pair=pair,
+        last_peak_candle=last_peak_candle,
+        order_histories=order_histories,
     )
