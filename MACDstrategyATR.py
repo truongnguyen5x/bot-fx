@@ -134,7 +134,7 @@ def macd(pair, trend):
         -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
     )
     peaks = macd_peaks if trend == "downtrend" else macd_valleys
-    valleys = macd_valleys if trend == "downtrend" else macd_peaks
+    # valleys = macd_valleys if trend == "downtrend" else macd_peaks
     last_peak_index = peaks[-1]
     last_peak_candle = _candles[last_peak_index]
     # last_peak_time = datetime.fromtimestamp(last_peak_candle["ctm"] / 1000, tz=timezone)
@@ -143,11 +143,11 @@ def macd(pair, trend):
     #     print(reason)
     #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
     #     return
-    if last_peak_index < valleys[-1]:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak so far {last_peak_index} < {valleys[-1]}"
-        print(reason)
-        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-        return
+    # if last_peak_index < valleys[-1]:
+    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} last peak so far {last_peak_index} < {valleys[-1]}"
+    #     print(reason)
+    #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+    #     return
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
