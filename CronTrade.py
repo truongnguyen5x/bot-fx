@@ -9,7 +9,7 @@ from xAPIConnector import APIClient, loginCommand
 load_dotenv()
 
 # Connect to your mongodb database
-mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"))
+mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
 ORDER_STATUS = ["error", "pending", None, "accepted", "rejected"]
 
