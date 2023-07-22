@@ -70,10 +70,9 @@ class JsonSocket(object):
         self._decoder = json.JSONDecoder()
         self._receivedData = ""
 
-    def connect(self, timeout=5):
+    def connect(self):
         for i in range(API_MAX_CONN_TRIES):
             try:
-                self.socket.settimeout(timeout)  # Set the timeout value
                 self.socket.connect((self.address, self.port))
             except socket.error as msg:
                 logger.error("SockThread Error: %s" % msg)
@@ -81,7 +80,7 @@ class JsonSocket(object):
                 continue
             # logger.info("Socket connected")
             return True
-        raise ConnectionError("Connection timeout")
+        return False
 
     def _sendObj(self, obj):
         msg = json.dumps(obj)

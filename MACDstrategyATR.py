@@ -195,6 +195,7 @@ def macd(pair, trend):
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
     client = APIClient()
+    client.timeout = 5
     loginResponse = client.execute(loginCommand(userId=userId, password=password))
     if loginResponse["status"] == False:
         print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))

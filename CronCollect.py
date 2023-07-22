@@ -75,6 +75,7 @@ def main():
     password = os.getenv("XTB_PASSWORD")
     try:
         client = APIClient()
+        client.timeout = 5
         loginResponse = client.execute(loginCommand(userId=userId, password=password))
 
         if loginResponse["status"] == False:
