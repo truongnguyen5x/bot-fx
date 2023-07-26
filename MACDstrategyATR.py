@@ -18,10 +18,10 @@ file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(file_handler)
 
+BOT_SIGN = "By MACD strategy"
 
-def open_order(
-    client, trend, ask, bid, config, pair, last_peak_candle, order_histories
-):
+
+def open_order(client, trend, ask, bid, config, pair, anchor_ctm, order_histories):
     # Lấy múi giờ +0
     timezone = pytz.timezone("UTC")
     now = datetime.now(timezone)
@@ -31,7 +31,7 @@ def open_order(
         {
             "tradeTransInfo": {
                 "cmd": 0 if trend == "uptrend" else 1,
-                "customComment": "By MACD strategy",
+                "customComment": BOT_SIGN,
                 "expiration": 0,
                 "order": 0,
                 "price": ask if trend == "uptrend" else bid,
@@ -52,9 +52,7 @@ def open_order(
     if res_order["status"] == False:
         return
     order_id = res_order["returnData"]["order"]
-    logger.info(
-        f"{trend} create order {pair} at {now} base on MACD {last_peak_candle['ctm']}"
-    )
+    logger.info(f"{trend} create order {pair} at {now} base on MACD {anchor_ctm}")
     requests.get(
         f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
     )
@@ -62,8 +60,8 @@ def open_order(
         {
             "pair": pair.split("_")[0],
             "timeframe": int(pair.split("_")[1]),
-            "ctm": last_peak_candle["ctm"],
-            "ctm_str": datetime.utcfromtimestamp(last_peak_candle["ctm"] / 1000),
+            "ctm": anchor_ctm,
+            "ctm_str": datetime.utcfromtimestamp(anchor_ctm / 1000),
             "from": "MACD strategy",
             "order_id": order_id,
             "status": "pending",
@@ -156,8 +154,8 @@ def macd(pair, trend):
     df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
     df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
     # Calculate ATR
-    df["atr"] = df["tr"].rolling(window=14).mean()
-    df["atr_min"] = df["atr"].rolling(14).min()
+    df["atr"] = df["tr"].rolling(window=config["atr_length"]).mean()
+    df["atr_min"] = df["atr"].rolling(config["atr_length"]).min()
     # Find ATR valleys
     # atr_valleys, _ = find_peaks(
     #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
@@ -178,18 +176,18 @@ def macd(pair, trend):
         return
 
     # check order opened is that peak
-    last_order = order_histories.find_one(
-        {
-            "pair": pair.split("_")[0],
-            "ctm": {"$gte": last_peak_candle["ctm"]},
-            "status": {"$in": ["accepted", "pending"]},
-        }
-    )
-    if last_order is not None:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
-        print(reason)
-        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-        return
+    # last_order = order_histories.find_one(
+    #     {
+    #         "pair": pair.split("_")[0],
+    #         "ctm": {"$gte": last_peak_candle["ctm"]},
+    #         "status": {"$in": ["accepted", "pending"]},
+    #     }
+    # )
+    # if last_order is not None:
+    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
+    #     print(reason)
+    #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+    #     return
 
     # login to get bid, ask
     userId = os.getenv("XTB_USER_ID")
@@ -200,6 +198,25 @@ def macd(pair, trend):
     if loginResponse["status"] == False:
         print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
         return
+    # check open too many order
+    all_opened_orders = client.commandExecute("getTrades", {"openedOnly": True})
+    if all_opened_orders["status"] == False:
+        return
+    opened_lots = 0
+    for order in all_opened_orders["returnData"]:
+        if (
+            order["symbol"] == pair.split("_")[0].upper()
+            and order["customComment"] == BOT_SIGN
+        ):
+            opened_lots += order["volume"]
+
+    if config["max_lots"] - opened_lots < config["lots_size"]:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] max lots"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+        return
+
+    # get bid and ask price
     res_symbol = client.commandExecute(
         "getSymbol",
         {
@@ -230,6 +247,6 @@ def macd(pair, trend):
         bid=bid,
         config=config,
         pair=pair,
-        last_peak_candle=last_peak_candle,
+        anchor_ctm=last_peak_candle["ctm"],
         order_histories=order_histories,
     )

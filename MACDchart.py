@@ -125,7 +125,7 @@ def plot_candles(df, config):
     df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
 
     # Calculate ATR
-    df["atr"] = df["tr"].rolling(window=14).mean()
+    df["atr"] = df["tr"].rolling(window=config["atr_length"]).mean()
 
     # Add ATR to the third subplot (row=3, col=1)
     fig.add_trace(
@@ -139,37 +139,37 @@ def plot_candles(df, config):
         col=1,
     )
     # Find ATR valleys
-    atr_valleys, _ = find_peaks(
-        -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
+    # atr_valleys, _ = find_peaks(
+    #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    # )
 
-    atr_peaks, _ = find_peaks(
-        df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
-    )
+    # atr_peaks, _ = find_peaks(
+    #     df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
+    # )
     # Plot ATR valleys as '*' symbols
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[atr_valleys],
-            y=df["atr"].iloc[atr_valleys],
-            mode="markers",
-            marker=dict(symbol="star", size=8, color="red"),
-            name="ATR Valleys",
-        ),
-        row=3,
-        col=1,
-    )
-    # Plot ATR valleys as '*' symbols
-    fig.add_trace(
-        go.Scatter(
-            x=df.index[atr_peaks],
-            y=df["atr"].iloc[atr_peaks],
-            mode="markers",
-            marker=dict(symbol="star", size=8, color="blue"),
-            name="ATR Valleys",
-        ),
-        row=3,
-        col=1,
-    )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index[atr_valleys],
+    #         y=df["atr"].iloc[atr_valleys],
+    #         mode="markers",
+    #         marker=dict(symbol="star", size=8, color="red"),
+    #         name="ATR Valleys",
+    #     ),
+    #     row=3,
+    #     col=1,
+    # )
+    # # Plot ATR valleys as '*' symbols
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index[atr_peaks],
+    #         y=df["atr"].iloc[atr_peaks],
+    #         mode="markers",
+    #         marker=dict(symbol="star", size=8, color="blue"),
+    #         name="ATR Valleys",
+    #     ),
+    #     row=3,
+    #     col=1,
+    # )
     # Calculate RSI
     rsi = calculate_rsi(df["close"], window=14)
     rsi_peaks, _ = find_peaks(-rsi, distance=30, prominence=20, threshold=0)
