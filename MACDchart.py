@@ -128,16 +128,16 @@ def plot_candles(df, config):
     df["atr"] = df["tr"].rolling(window=config["atr_length"]).mean()
 
     # Add ATR to the third subplot (row=3, col=1)
-    fig.add_trace(
-        go.Scatter(
-            x=df.index,
-            y=df["atr"],
-            line=dict(color="purple", width=1.5),
-            name="ATR",
-        ),
-        row=3,
-        col=1,
-    )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=df.index,
+    #         y=df["atr"],
+    #         line=dict(color="purple", width=1.5),
+    #         name="ATR",
+    #     ),
+    #     row=3,
+    #     col=1,
+    # )
     # Find ATR valleys
     # atr_valleys, _ = find_peaks(
     #     -df["atr"], distance=config["atr_distance"], prominence=config["atr_prominence"]
@@ -174,16 +174,16 @@ def plot_candles(df, config):
     rsi = calculate_rsi(df["close"], window=14)
     rsi_peaks, _ = find_peaks(-rsi, distance=30, prominence=20, threshold=0)
     # Add RSI to the fourth subplot (row=4, col=1)
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=df.index,
-    #         y=rsi,
-    #         line=dict(color="green", width=1),
-    #         name="RSI",
-    #     ),
-    #     row=4,
-    #     col=1,
-    # )
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=rsi,
+            line=dict(color="green", width=1),
+            name="RSI",
+        ),
+        row=3,
+        col=1,
+    )
     # Plot RSI valleys as '*' symbols
     # fig.add_trace(
     #     go.Scatter(

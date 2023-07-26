@@ -211,7 +211,7 @@ def macd(pair, trend):
             opened_lots += order["volume"]
 
     if config["max_lots"] - opened_lots < config["lots_size"]:
-        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] max lots"
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} max lots"
         print(reason)
         configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
         return
