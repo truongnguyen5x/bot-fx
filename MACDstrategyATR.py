@@ -176,18 +176,18 @@ def macd(pair, trend):
         return
 
     # check order opened is that peak
-    # last_order = order_histories.find_one(
-    #     {
-    #         "pair": pair.split("_")[0],
-    #         "ctm": {"$gte": last_peak_candle["ctm"]},
-    #         "status": {"$in": ["accepted", "pending"]},
-    #     }
-    # )
-    # if last_order is not None:
-    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
-    #     print(reason)
-    #     configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-    #     return
+    last_order = order_histories.find_one(
+        {
+            "pair": pair.split("_")[0],
+            "ctm": {"$gte": last_peak_candle["ctm"]},
+            "status": {"$in": ["accepted", "pending"]},
+        }
+    )
+    if last_order is not None:
+        reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} has last order at {last_order['open_time_str']}"
+        print(reason)
+        configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
+        return
 
     # login to get bid, ask
     userId = os.getenv("XTB_USER_ID")
