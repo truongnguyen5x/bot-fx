@@ -3,6 +3,7 @@ import os
 from pymongo import MongoClient
 import logging
 from MACDstrategyATR import macd
+from RSIstrategyATR import rsi
 import os
 from xAPIConnector import APIClient, loginCommand
 
@@ -54,7 +55,7 @@ def main():
         check_opened_order(client)
         for pair in pairs:
             if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
-                macd(pair["pair"], pair["trend"])
+                rsi(pair["pair"], pair["trend"])
                 pass
     except Exception as e:
         mongoClient.close()
