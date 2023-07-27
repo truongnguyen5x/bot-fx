@@ -72,6 +72,8 @@ def open_order(client, trend, ask, bid, config, pair, anchor_ctm, order_historie
 
 
 def macd(pair, trend):
+    # nguyên tắc vào lệnh
+
     mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
     db = mongoClient["bot_fx"]
     order_histories = db["orders"]
