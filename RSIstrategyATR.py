@@ -65,9 +65,9 @@ def open_order(client, trend, ask, bid, config, pair, anchor_ctm, order_historie
     if res_order["status"] == False:
         return
     order_id = res_order["returnData"]["order"]
-    logger.info(f"{trend} create order {pair} at {now} base on MACD {anchor_ctm}")
+    logger.info(f"{trend} create order {pair} at {now} base on RSI {anchor_ctm}")
     requests.get(
-        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on MACD'
+        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={trend} create order {pair} base on RSI'
     )
     order_histories.insert_one(
         {
@@ -75,7 +75,7 @@ def open_order(client, trend, ask, bid, config, pair, anchor_ctm, order_historie
             "timeframe": int(pair.split("_")[1]),
             "ctm": anchor_ctm,
             "ctm_str": datetime.utcfromtimestamp(anchor_ctm / 1000),
-            "from": "MACD strategy",
+            "from": BOT_SIGN,
             "order_id": order_id,
             "status": "pending",
             "open_time": int(now.timestamp() * 1000),
