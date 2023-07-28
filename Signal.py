@@ -99,20 +99,24 @@ def check_signal(pair, trend):
     last_peak_rsi_index = rsi_point[-1]
     last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
-    if (
-        "rsi_peak_ctm" not in config
-        or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+    # check oversold or overbuy
+    if (trend == "downtrend" and rsi[last_peak_rsi_index] > 70) or (
+        trend == "uptrend" and rsi[last_peak_rsi_index] < 30
     ):
-        configs.update_one(
-            {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
-        )
-        notify(
-            pair=pair,
-            trend=trend,
-            strategy_name="RSI",
-            configs=configs,
-            ctm=last_peak_rsi_candle["ctm"],
-        )
+        if (
+            "rsi_peak_ctm" not in config
+            or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+        ):
+            configs.update_one(
+                {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
+            )
+            notify(
+                pair=pair,
+                trend=trend,
+                strategy_name="RSI",
+                configs=configs,
+                ctm=last_peak_rsi_candle["ctm"],
+            )
     # TODO:
     # notify(
     #     pair=pair,
