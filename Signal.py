@@ -99,28 +99,28 @@ def check_signal(pair, trend):
     last_peak_rsi_index = rsi_point[-1]
     last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
-    # if (
-    #     "rsi_peak_ctm" not in config
-    #     or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
-    # ):
-    #     configs.update_one(
-    #         {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
-    #     )
-    #     notify(
-    #         pair=pair,
-    #         trend=trend,
-    #         strategy_name="RSI",
-    #         configs=configs,
-    #         ctm=last_peak_rsi_candle["ctm"],
-    #     )
+    if (
+        "rsi_peak_ctm" not in config
+        or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+    ):
+        configs.update_one(
+            {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
+        )
+        notify(
+            pair=pair,
+            trend=trend,
+            strategy_name="RSI",
+            configs=configs,
+            ctm=last_peak_rsi_candle["ctm"],
+        )
     # TODO:
-    notify(
-        pair=pair,
-        trend=trend,
-        strategy_name="RSI",
-        configs=configs,
-        ctm=last_peak_rsi_candle["ctm"],
-    )
+    # notify(
+    #     pair=pair,
+    #     trend=trend,
+    #     strategy_name="RSI",
+    #     configs=configs,
+    #     ctm=last_peak_rsi_candle["ctm"],
+    # )
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
