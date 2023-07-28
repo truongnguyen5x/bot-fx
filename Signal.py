@@ -6,6 +6,8 @@ from datetime import datetime, time, timedelta, timezone
 import pandas as pd
 from scipy.signal import find_peaks
 import requests
+import pytz
+
 
 load_dotenv()
 
@@ -37,7 +39,9 @@ def calculate_rsi(prices, window=14):
 
 
 def notify(pair, trend, strategy_name, configs, ctm):
-    _time = datetime.fromtimestamp(ctm / 1000)
+    _time = datetime.fromtimestamp(ctm / 1000, pytz.utc).astimezone(
+        pytz.timezone("Etc/GMT-7")
+    )
     requests.get(
         f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={"Buy" if trend == "uptrend" else "Sell"} in {pair} with {strategy_name} at {_time.strftime("%d-%m-%Y %H:%M:%S")}'
     )
@@ -95,28 +99,28 @@ def check_signal(pair, trend):
     last_peak_rsi_index = rsi_point[-1]
     last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
-    if (
-        "rsi_peak_ctm" not in config
-        or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
-    ):
-        configs.update_one(
-            {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
-        )
-        notify(
-            pair=pair,
-            trend=trend,
-            strategy_name="RSI",
-            configs=configs,
-            ctm=last_peak_rsi_candle["ctm"],
-        )
+    # if (
+    #     "rsi_peak_ctm" not in config
+    #     or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+    # ):
+    #     configs.update_one(
+    #         {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
+    #     )
+    #     notify(
+    #         pair=pair,
+    #         trend=trend,
+    #         strategy_name="RSI",
+    #         configs=configs,
+    #         ctm=last_peak_rsi_candle["ctm"],
+    #     )
     # TODO:
-    # notify(
-    #     pair=pair,
-    #     trend=trend,
-    #     strategy_name="RSI",
-    #     configs=configs,
-    #     ctm=last_peak_rsi_candle["ctm"],
-    # )
+    notify(
+        pair=pair,
+        trend=trend,
+        strategy_name="RSI",
+        configs=configs,
+        ctm=last_peak_rsi_candle["ctm"],
+    )
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
