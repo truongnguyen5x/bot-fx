@@ -43,7 +43,7 @@ def notify(pair, trend, strategy_name, configs, ctm):
         pytz.timezone("Etc/GMT-7")
     )
     requests.get(
-        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={"Buy" if trend == "uptrend" else "Sell"} in {pair} with {strategy_name} at {_time.strftime("%d-%m-%Y %H:%M:%S")}'
+        f'https://api.telegram.org/bot{os.getenv("TELEGRAM_BOT_TOKEN")}/sendMessage?chat_id={os.getenv("TELEGRAM_USER_ID")}&text={"Buy" if trend == "uptrend" else "Sell"} in {pair} with {strategy_name} at {_time.strftime("%d-%m %H:%M")}'
     )
 
 
@@ -117,6 +117,7 @@ def check_signal(pair, trend):
                 configs=configs,
                 ctm=last_peak_rsi_candle["ctm"],
             )
+
     # TODO:
     # notify(
     #     pair=pair,
