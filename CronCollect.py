@@ -13,7 +13,17 @@ load_dotenv()
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
-list_pair = ("eurusd", "gbpusd", "audusd", "nzdusd", "usdjpy")
+list_pair = (
+    "eurusd",
+    "gbpusd",
+    "audusd",
+    "nzdusd",
+    "usdjpy",
+    "gbpjpy",
+    "eurjpy",
+    "audnzd",
+    "euraud",
+)
 
 
 # Create a logger object and set its level to DEBUG
