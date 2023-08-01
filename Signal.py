@@ -117,6 +117,8 @@ def check_signal(pair, trend):
                 configs=configs,
                 ctm=last_peak_rsi_candle["ctm"],
             )
+    else:
+        print(rsi[last_peak_rsi_index])
 
     # TODO:
     # notify(
