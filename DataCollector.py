@@ -49,6 +49,8 @@ def collect(pair, fromTime, timeframe):
 
         collection.delete_many({})
         collection.insert_many(records)
+    else:
+        print(res)
 
 
 def main():
