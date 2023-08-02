@@ -136,43 +136,43 @@ def check_signal(pair, trend):
     last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
     # check oversold or overbuy
-    # if (trend == "downtrend" and rsi[last_peak_rsi_index] > 70) or (
-    #     trend == "uptrend" and rsi[last_peak_rsi_index] < 30
-    # ):
-    #     if (
-    #         "rsi_peak_ctm" not in config
-    #         or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
-    #     ):
-    #         configs.update_one(
-    #             {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
-    #         )
-    #         notify(
-    #             df=df,
-    #             macd_peak=macd_peaks,
-    #             macd_valley=macd_valleys,
-    #             pair=pair,
-    #             trend=trend,
-    #             strategy_name="RSI",
-    #             configs=configs,
-    #             ctm=last_peak_rsi_candle["ctm"],
-    #         )
-    # else:
-    #     print(f"{pair} rsi")
+    if (trend == "downtrend" and rsi[last_peak_rsi_index] > 70) or (
+        trend == "uptrend" and rsi[last_peak_rsi_index] < 30
+    ):
+        if (
+            "rsi_peak_ctm" not in config
+            or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+        ):
+            configs.update_one(
+                {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
+            )
+            notify(
+                df=df,
+                macd_peak=macd_peaks,
+                macd_valley=macd_valleys,
+                pair=pair,
+                trend=trend,
+                strategy_name="RSI",
+                configs=configs,
+                ctm=last_peak_rsi_candle["ctm"],
+            )
+    else:
+        print(f"{pair} rsi")
 
     # TODO:
 
-    try:
-        notify(
-            df=df,
-            macd_peak=macd_peaks,
-            macd_valley=macd_valleys,
-            pair=pair,
-            trend=trend,
-            strategy_name="RSI",
-            ctm=last_peak_rsi_candle["ctm"],
-        )
-    except Exception as e:
-        print(e)
+    # try:
+    #     notify(
+    #         df=df,
+    #         macd_peak=macd_peaks,
+    #         macd_valley=macd_valleys,
+    #         pair=pair,
+    #         trend=trend,
+    #         strategy_name="RSI",
+    #         ctm=last_peak_rsi_candle["ctm"],
+    #     )
+    # except Exception as e:
+    #     print(e)
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
