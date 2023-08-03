@@ -194,7 +194,6 @@ def main():
         pairs = configs.find({"enabled": True})
         for pair in pairs:
             check_signal(pair["pair"], pair["trend"])
-            pass
     except Exception as e:
         mongoClient.close()
         logger.error(e)
