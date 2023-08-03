@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, jsonify, request, make_response, send_file
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from flask_cors import CORS, cross_origin
@@ -53,6 +53,12 @@ def update_pair(pair):
     db.configs.update_one({"pair": pair}, {"$set": data})
 
     return {"status": True}
+
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    static_folder = "/root/bot-fx/images"
+    return send_file(os.path.join(static_folder, filename))
 
 
 if __name__ == "__main__":
