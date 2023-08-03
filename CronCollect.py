@@ -27,10 +27,11 @@ logger.addHandler(file_handler)
 def draw_svg(pair, limit=576):
     histories = db[pair]
     rows = list(histories.find().sort("ctm", -1).limit(limit))
+    rows.reverse()
     df = pd.DataFrame(rows)
-    # df["idx"] = df.reset_index().index + 1
+    df["idx"] = df.reset_index().index + 1
     fig, ax = plt.subplots(figsize=(6, 2))
-    ax.plot(df["timestamp"], df["close"], color="#15d90d", label=pair)
+    ax.plot(df["idx"], df["close"], color="#15d90d", label=pair)
     fig.patch.set_alpha(0.0)
     ax.axis("off")
     ax.margins(0)
