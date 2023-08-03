@@ -157,19 +157,13 @@ def check_signal(pair, trend):
         print(f"{pair} rsi")
 
     # TODO:
-
-    # try:
-    #     notify(
-    #         df=df,
-    #         macd_peak=macd_peaks,
-    #         macd_valley=macd_valleys,
-    #         pair=pair,
-    #         trend=trend,
-    #         strategy_name="RSI",
-    #         ctm=last_peak_rsi_candle["ctm"],
-    #     )
-    # except Exception as e:
-    #     print(e)
+    # notify(
+    #     df=df,
+    #     pair=pair,
+    #     trend=trend,
+    #     strategy_name="RSI",
+    #     ctm=last_peak_rsi_candle["ctm"],
+    # )
 
     # Calculate True Range (TR)
     df["tr1"] = df["high"] - df["low"]
@@ -194,6 +188,7 @@ def main():
         pairs = configs.find({"enabled": True})
         for pair in pairs:
             check_signal(pair["pair"], pair["trend"])
+        # check_signal(pairs[0]["pair"], pairs[0]["trend"])
     except Exception as e:
         mongoClient.close()
         logger.error(e)
