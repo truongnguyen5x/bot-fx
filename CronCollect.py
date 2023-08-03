@@ -15,14 +15,6 @@ load_dotenv()
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
 
-# Create a logger object and set its level to DEBUG
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logger.addHandler(file_handler)
-
 
 def draw_svg(pair, limit=576):
     histories = db[pair]
@@ -120,7 +112,6 @@ def main():
     except Exception as e:
         print(e)
         mongoClient.close()
-        logger.error(e)
     mongoClient.close()
 
 
