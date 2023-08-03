@@ -193,9 +193,8 @@ def main():
         configs = db["configs"]
         pairs = configs.find({"enabled": True})
         for pair in pairs:
-            if pair["trend"] == "uptrend" or pair["trend"] == "downtrend":
-                check_signal(pair["pair"], pair["trend"])
-                pass
+            check_signal(pair["pair"], pair["trend"])
+            pass
     except Exception as e:
         mongoClient.close()
         logger.error(e)
