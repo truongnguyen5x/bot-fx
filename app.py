@@ -55,11 +55,5 @@ def update_pair(pair):
     return {"status": True}
 
 
-@app.route("/static/<path:filename>")
-def serve_static(filename):
-    static_folder = "/root/bot-fx/images"
-    return send_file(os.path.join(static_folder, filename))
-
-
 if __name__ == "__main__":
     app.run(debug=True)
