@@ -39,7 +39,7 @@ def calculate_rsi(prices, window=14):
     return rsi
 
 
-def draw_chart(df, macd_peak, macd_valley, pair):
+def draw_chart(df, pair):
     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
     fig = make_subplots(
         rows=3,
@@ -63,12 +63,11 @@ def draw_chart(df, macd_peak, macd_valley, pair):
     )
     fig.update_layout(xaxis_rangeslider_visible=False)
     image_path = os.getcwd() + f"\images\{pair}.html"
-    fig.show()
     fig.write_html(image_path)
 
 
-def notify(df, pair, trend, strategy_name, macd_peak, macd_valley, ctm):
-    # draw_chart(df=df, macd_peak=macd_peak, macd_valley=macd_valley, pair=pair)
+def notify(df, pair, trend, strategy_name, ctm):
+    # draw_chart(df=df, pair=pair)
     _time = datetime.fromtimestamp(ctm / 1000, pytz.utc).astimezone(
         pytz.timezone("Etc/GMT-7")
     )
@@ -92,34 +91,34 @@ def check_signal(pair, trend):
     ema_26 = df["close"].ewm(span=26, adjust=False).mean()
     macd = ema_12 - ema_26
     df["macd"] = macd
-    # Find peaks and valleys of the MACD line
-    macd_peaks, _ = find_peaks(
-        macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
-    )
-    macd_valleys, _ = find_peaks(
-        -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
-    )
-    macd_point = macd_peaks if trend == "downtrend" else macd_valleys
-    last_peak_macd_index = macd_point[-1]
-    last_peak_macd_candle = _candles[last_peak_macd_index]
+    # # Find peaks and valleys of the MACD line
+    # macd_peaks, _ = find_peaks(
+    #     macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
+    # )
+    # macd_valleys, _ = find_peaks(
+    #     -macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
+    # )
+    # macd_point = macd_peaks if trend == "downtrend" else macd_valleys
+    # last_peak_macd_index = macd_point[-1]
+    # last_peak_macd_candle = _candles[last_peak_macd_index]
 
-    if (
-        "macd_peak_ctm"
-        not in config
-        # or last_peak_macd_candle["ctm"] > config["macd_peak_ctm"]
-    ):
-        configs.update_one(
-            {"pair": pair}, {"$set": {"macd_peak_ctm": last_peak_macd_candle["ctm"]}}
-        )
-        notify(
-            pair=pair,
-            trend=trend,
-            strategy_name="MACD",
-            configs=configs,
-            ctm=last_peak_macd_candle["ctm"],
-        )
-    else:
-        print(f"{pair} macd")
+    # if (
+    #     "macd_peak_ctm"
+    #     not in config
+    #     # or last_peak_macd_candle["ctm"] > config["macd_peak_ctm"]
+    # ):
+    #     configs.update_one(
+    #         {"pair": pair}, {"$set": {"macd_peak_ctm": last_peak_macd_candle["ctm"]}}
+    #     )
+    #     notify(
+    #         pair=pair,
+    #         trend=trend,
+    #         strategy_name="MACD",
+    #         configs=configs,
+    #         ctm=last_peak_macd_candle["ctm"],
+    #     )
+    # else:
+    #     print(f"{pair} macd")
 
     rsi = calculate_rsi(df["close"], window=14)
     df["rsi"] = rsi
@@ -148,8 +147,6 @@ def check_signal(pair, trend):
             )
             notify(
                 df=df,
-                macd_peak=macd_peaks,
-                macd_valley=macd_valleys,
                 pair=pair,
                 trend=trend,
                 strategy_name="RSI",
