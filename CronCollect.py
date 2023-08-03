@@ -24,8 +24,24 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logger.addHandler(file_handler)
 
 
-def draw_svg():
-    pass
+def draw_svg(pair, limit=576):
+    histories = db[pair]
+    rows = list(histories.find().sort("ctm", -1).limit(limit))
+    df = pd.DataFrame(rows)
+    fig, ax = plt.subplots(figsize=(6, 2))
+    ax.plot(df["timestamp"], df["close"], color="#15d90d", label=pair)
+    fig.patch.set_alpha(0.0)
+    ax.axis("off")
+    ax.margins(0)
+    ax.autoscale(tight=True)
+    path = os.getcwd() + os.path.join(f"\images\{pair}.svg")
+
+    plt.savefig(
+        path,
+        format="svg",
+        bbox_inches="tight",
+        transparent=True,
+    )
 
 
 def collect(pair, client, timeframe):
@@ -86,15 +102,21 @@ def main():
             return
         configs = db["configs"]
         pairs = configs.find()
-        for pair in pairs:
-            tf = args.timeframe if args.timeframe is not None else 5
+        tf = args.timeframe if args.timeframe is not None else 5
+        list_pair = list(pairs)
+        for pair in list_pair:
             if tf == int(pair["pair"].split("_")[1]):
                 collect(
                     pair=pair["pair"],
                     client=client,
                     timeframe=tf,
                 )
+
+        for pair in list_pair:
+            if tf == int(pair["pair"].split("_")[1]):
+                draw_svg(pair=pair["pair"])
     except Exception as e:
+        print(e)
         mongoClient.close()
         logger.error(e)
     mongoClient.close()
