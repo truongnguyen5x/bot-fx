@@ -7,6 +7,7 @@ import logging
 import os
 from xAPIConnector import APIClient, loginCommand
 import matplotlib.pyplot as plt
+import argparse
 
 load_dotenv()
 
@@ -27,10 +28,10 @@ def draw_svg():
     pass
 
 
-def collect(pair, client):
+def collect(pair, client, timeframe):
     histories = db[pair]
     last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
-    timeframe = int(pair.split("_")[1])
+
     symbol = pair.split("_")[0]
     res = client.commandExecute(
         "getChartLastRequest",
@@ -66,6 +67,11 @@ def collect(pair, client):
 
 
 def main():
+    # create a parser object
+    parser = argparse.ArgumentParser(description="Collector data candle jobs")
+    parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
+    args = parser.parse_args()
+
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
     try:
@@ -79,7 +85,12 @@ def main():
         configs = db["configs"]
         pairs = configs.find()
         for pair in pairs:
-            collect(pair["pair"], client)
+            tf = args.timeframe if args.timeframe is not None else 5
+            collect(
+                pair=pair["pair"],
+                client=client,
+                timeframe=tf,
+            )
     except Exception as e:
         mongoClient.close()
         logger.error(e)
