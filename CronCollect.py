@@ -6,25 +6,13 @@ from pymongo import MongoClient
 import logging
 import os
 from xAPIConnector import APIClient, loginCommand
-import argparse
+import matplotlib.pyplot as plt
 
 load_dotenv()
 
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
-list_pair = (
-    "eurusd",
-    "gbpusd",
-    "audusd",
-    "nzdusd",
-    "usdjpy",
-    "gbpjpy",
-    "eurjpy",
-    "audnzd",
-    "euraud",
-)
-
 
 # Create a logger object and set its level to DEBUG
 logger = logging.getLogger()
@@ -35,20 +23,22 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logger.addHandler(file_handler)
 
 
-def collect(
-    pair,
-    client,
-    timeframe,
-):
-    histories = db[f"{pair}_{timeframe}"]
+def draw_svg():
+    pass
+
+
+def collect(pair, client):
+    histories = db[pair]
     last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
+    timeframe = int(pair.split("_")[1])
+    symbol = pair.split("_")[0]
     res = client.commandExecute(
         "getChartLastRequest",
         {
             "info": {
                 "period": timeframe,
                 "start": last_candle["ctm"] - timeframe * 60000,
-                "symbol": pair.upper(),
+                "symbol": symbol.upper(),
             }
         },
     )
@@ -76,11 +66,6 @@ def collect(
 
 
 def main():
-    # create a parser object
-    parser = argparse.ArgumentParser(description="Collector data candle jobs")
-    parser.add_argument("-t", "--timeframe", type=int, help="timeframe")
-    args = parser.parse_args()
-
     userId = os.getenv("XTB_USER_ID")
     password = os.getenv("XTB_PASSWORD")
     try:
@@ -91,8 +76,10 @@ def main():
         if loginResponse["status"] == False:
             print("Login failed. Error code: {0}".format(loginResponse["errorCode"]))
             return
-        for pair in list_pair:
-            collect(pair, client, args.timeframe if args.timeframe is not None else 5)
+        configs = db["configs"]
+        pairs = configs.find()
+        for pair in pairs:
+            collect(pair["pair"], client)
     except Exception as e:
         mongoClient.close()
         logger.error(e)
