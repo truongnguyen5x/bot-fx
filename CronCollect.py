@@ -30,6 +30,7 @@ def draw_svg():
 
 def collect(pair, client, timeframe):
     histories = db[pair]
+
     last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
 
     symbol = pair.split("_")[0]
@@ -87,11 +88,12 @@ def main():
         pairs = configs.find()
         for pair in pairs:
             tf = args.timeframe if args.timeframe is not None else 5
-            collect(
-                pair=pair["pair"],
-                client=client,
-                timeframe=tf,
-            )
+            if tf == int(pair["pair"].split("_")[1]):
+                collect(
+                    pair=pair["pair"],
+                    client=client,
+                    timeframe=tf,
+                )
     except Exception as e:
         mongoClient.close()
         logger.error(e)
