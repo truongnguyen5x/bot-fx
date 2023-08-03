@@ -34,8 +34,8 @@ def draw_svg(pair, limit=576):
     ax.axis("off")
     ax.margins(0)
     ax.autoscale(tight=True)
-    path = os.getcwd() + os.path.join(f"\images\{pair}.svg")
-
+    path = os.path.join(os.getcwd(), "images", f"{pair}.svg")
+    print(path)
     plt.savefig(
         path,
         format="svg",
