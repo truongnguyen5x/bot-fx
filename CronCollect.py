@@ -54,6 +54,7 @@ def collect(pair, client, timeframe):
         df["timestamp"] = pd.to_datetime(df["ctm"], unit="ms")
 
         records = df.to_dict("records")
+        print(pair)
         print(df)
 
         if len(records) > 0:
