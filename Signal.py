@@ -150,7 +150,6 @@ def check_signal(pair, trend):
                 pair=pair,
                 trend=trend,
                 strategy_name="RSI",
-                configs=configs,
                 ctm=last_peak_rsi_candle["ctm"],
             )
         else:
