@@ -153,6 +153,8 @@ def check_signal(pair, trend):
                 configs=configs,
                 ctm=last_peak_rsi_candle["ctm"],
             )
+        else:
+            print(f"{pair} have rsi_peak_ctm")
     else:
         print(f"{pair} rsi")
 
@@ -172,14 +174,7 @@ def check_signal(pair, trend):
     df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
     df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
     # Calculate ATR
-    df["atr"] = df["tr"].rolling(window=config["atr_length"]).mean()
-    df["atr_min"] = df["atr"].rolling(config["atr_length"]).min()
-
-    # if df.iloc[-1]["atr_min"] > config["atr_threshold"]:
-    #     reason = f"[{now.strftime('%d-%m-%Y %H:%M:%S')}] {pair} atr is too high {df.iloc[-1]['atr_min']} > {config['atr_threshold']}"
-    #     print(reason)
-    #     # configs.update_one({"pair": pair}, {"$set": {"reason": reason}})
-    #     return
+    df["atr"] = df["tr"].rolling(window=14).mean()
 
 
 def main():
@@ -190,6 +185,7 @@ def main():
             check_signal(pair["pair"], pair["trend"])
         # check_signal(pairs[0]["pair"], pairs[0]["trend"])
     except Exception as e:
+        print(e)
         mongoClient.close()
         logger.error(e)
 
