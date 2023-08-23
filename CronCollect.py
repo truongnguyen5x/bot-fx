@@ -11,6 +11,16 @@ import argparse
 
 load_dotenv()
 
+
+# Create a logger object and set its level to DEBUG
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+file_handler = logging.FileHandler(os.path.join(os.getcwd(), "logfile.txt"))
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+logger.addHandler(file_handler)
+
+
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
@@ -112,6 +122,7 @@ def main():
     except Exception as e:
         print(e)
         mongoClient.close()
+        logger.log(e)
     mongoClient.close()
 
 
