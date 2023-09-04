@@ -39,7 +39,7 @@ def draw_svg(pair, limit=576):
     ax.margins(0)
     ax.autoscale(tight=True)
     path = os.path.join(os.getcwd(), "static", f"{pair}.svg")
-    print(path)
+    # print(path)
     plt.savefig(
         path,
         format="svg",
@@ -115,12 +115,13 @@ def main():
                     client=client,
                     timeframe=tf,
                 )
-
-        for pair in list_pair:
-            if tf == int(pair["pair"].split("_")[1]):
-                draw_svg(pair=pair["pair"])
+        try:
+            for pair in list_pair:
+                if tf == int(pair["pair"].split("_")[1]):
+                    draw_svg(pair=pair["pair"])
+        except Exception as e:
+            print(e)
     except Exception as e:
-        print(e)
         mongoClient.close()
         logger.log(e)
     mongoClient.close()
