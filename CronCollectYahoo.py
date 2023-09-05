@@ -131,6 +131,15 @@ def main():
     try:
         tf = args.timeframe if args.timeframe is not None else 5
         collect(timeframe=tf)
+        try:
+            configs = db["configs"]
+            pairs = configs.find()
+            list_pair = list(pairs)
+            for pair in list_pair:
+                if tf == int(pair["pair"].split("_")[1]):
+                    draw_svg(pair=pair["pair"])
+        except Exception as e1:
+            print(e)
 
     except Exception as e:
         print(e)
