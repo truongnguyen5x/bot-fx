@@ -137,7 +137,7 @@ def main():
                 if tf == int(pair["pair"].split("_")[1]):
                     draw_svg(pair=pair["pair"])
         except Exception as e1:
-            print(e)
+            print(e1)
 
     except Exception as e:
         print(e)
