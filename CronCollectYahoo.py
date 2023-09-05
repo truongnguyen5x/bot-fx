@@ -9,6 +9,8 @@ import yfinance as yf
 import argparse
 from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
+import pytz
+
 
 load_dotenv()
 
@@ -72,12 +74,11 @@ def collect(
     configs = db["configs"]
     pairs = configs.find()
     list_pair = list(pairs)
-    # histories = db[f"{pair}_{timeframe}"]
-    # last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
-    # TODO:
-    current_time_utc = datetime.now(timezone.utc)
 
-    print(current_time_utc)
+    # TODO:
+    # current_time_utc = datetime.now(timezone.utc)
+
+    # print(current_time_utc)
 
     symbol = list(map(symbol_label, list_pair))
     # print(str(timeframe))
@@ -94,31 +95,31 @@ def collect(
     )
 
     # print(data)
-
-    for _symbol in symbol2:
-        df = data[_symbol]
-        # df.rename(
-        #     columns={"Open": "open", "High": "high", "Low": "low", "Close": "close"},
-        #     inplace=True,
-        # )
-
+    for i in range(len(symbol)):
+        df = data[symbol2[i]]
         df.columns = ["open", "high", "low", "close", "adj close", "vol"]
         del df["adj close"]
         del df["vol"]
-        df["timestamp"] = pd.to_datetime(df.index)
+        df["timestamp"] = pd.to_datetime(df.index, utc=True)
+        if timeframe == 15:
+            df["timestamp"] = df["timestamp"].apply(lambda x: x - timedelta(hours=1))
         df["ctm"] = df["timestamp"].apply(lambda x: int(x.timestamp() * 1000))
+        # print(df)
+        histories = db[symbol[i]]
+        last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
+        # filter_df = df[df["ctm"] > 1693887300000]
+        filter_df = df[df["ctm"] > last_candle["ctm"]]
+        records = filter_df.to_dict("records")
 
-        records = df.to_dict("records")
-        print(df)
-
-    # if len(records) > 0:
-    #     # logging.info(
-    #     #     f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
-    #     # )
-    #     for record in records:
-    #         histories.update_one(
-    #             {"ctm": record["ctm"]}, {"$set": record}, upsert=True
-    #         )
+        if len(records) > 0:
+            # logging.info(
+            #     f"cronjob get {len(records)} {pair} candles timeframe m{timeframe}"
+            # )
+            for record in records:
+                histories.update_one(
+                    {"ctm": record["ctm"]}, {"$set": record}, upsert=True
+                )
+            # pass
 
 
 def main():
@@ -132,6 +133,7 @@ def main():
         collect(timeframe=tf)
 
     except Exception as e:
+        print(e)
         mongoClient.close()
         logger.error(e)
     mongoClient.close()
