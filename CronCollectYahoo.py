@@ -9,7 +9,6 @@ import yfinance as yf
 import argparse
 from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
-import pytz
 
 
 load_dotenv()
@@ -48,7 +47,6 @@ def draw_svg(pair, limit=576):
 # Connect to your mongodb database
 mongoClient = MongoClient(os.getenv("MONGO_CONNECTION"), connectTimeoutMS=2000)
 db = mongoClient["bot_fx"]
-list_pair = ("eurusd", "gbpusd", "audusd", "nzdusd", "usdjpy")
 
 
 # Create a logger object and set its level to DEBUG
