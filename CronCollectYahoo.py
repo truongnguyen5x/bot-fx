@@ -106,7 +106,7 @@ def collect(
         histories = db[symbol[i]]
         last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
         # filter_df = df[df["ctm"] > 1693887300000]
-        filter_df = df[df["ctm"] > last_candle["ctm"]]
+        filter_df = df[df["ctm"] > last_candle["ctm"] - timeframe * 60000]
         records = filter_df.to_dict("records")
 
         if len(records) > 0:
