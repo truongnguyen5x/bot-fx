@@ -135,15 +135,7 @@ def check_signal(pair, trend):
     # last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
     # check oversold or overbuy
-    print(
-        pair,
-        rsi[rsi_point[-1]],
-        rsi[rsi_point[-2]],
-        rsi[rsi_point[-3]],
-        rsi_point[-1],
-        rsi_point[-2],
-        rsi_point[-3],
-    )
+
     if (
         trend == "downtrend"
         and rsi[rsi_point[-1]] < 30
@@ -161,7 +153,6 @@ def check_signal(pair, trend):
         > _candles[rsi_point[-2]]["high"]
         > _candles[rsi_point[-3]]["high"]
     ):
-        print(trend, pair)
         last_peak_rsi_candle = _candles[rsi_point[-1]]
         if (
             "rsi_peak_ctm" not in config
