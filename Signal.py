@@ -39,31 +39,31 @@ def calculate_rsi(prices, window=14):
     return rsi
 
 
-def draw_chart(df, pair):
-    df["index"] = pd.to_datetime(df["ctm"], unit="ms")
-    fig = make_subplots(
-        rows=3,
-        cols=1,
-        shared_xaxes=True,
-        row_heights=[0.6, 0.2, 0.2],
-        vertical_spacing=0.01,
-    )
-    # Add a candlestick trace to the first subplot (row=1, col=1)
-    fig.add_trace(
-        go.Candlestick(
-            x=df.index,
-            open=df["open"],
-            high=df["high"],
-            low=df["low"],
-            close=df["close"],
-            name="Candlestick",
-        ),
-        row=1,
-        col=1,
-    )
-    fig.update_layout(xaxis_rangeslider_visible=False)
-    image_path = os.getcwd() + f"\images\{pair}.html"
-    fig.write_html(image_path)
+# def draw_chart(df, pair):
+#     df["index"] = pd.to_datetime(df["ctm"], unit="ms")
+#     fig = make_subplots(
+#         rows=3,
+#         cols=1,
+#         shared_xaxes=True,
+#         row_heights=[0.6, 0.2, 0.2],
+#         vertical_spacing=0.01,
+#     )
+#     # Add a candlestick trace to the first subplot (row=1, col=1)
+#     fig.add_trace(
+#         go.Candlestick(
+#             x=df.index,
+#             open=df["open"],
+#             high=df["high"],
+#             low=df["low"],
+#             close=df["close"],
+#             name="Candlestick",
+#         ),
+#         row=1,
+#         col=1,
+#     )
+#     fig.update_layout(xaxis_rangeslider_visible=False)
+#     image_path = os.getcwd() + f"\images\{pair}.html"
+#     fig.write_html(image_path)
 
 
 def notify(df, pair, trend, strategy_name, ctm):
@@ -87,10 +87,10 @@ def check_signal(pair, trend):
     df = pd.DataFrame(_candles)
 
     # Calculate MACD and signal lines
-    ema_12 = df["close"].ewm(span=12, adjust=False).mean()
-    ema_26 = df["close"].ewm(span=26, adjust=False).mean()
-    macd = ema_12 - ema_26
-    df["macd"] = macd
+    # ema_12 = df["close"].ewm(span=12, adjust=False).mean()
+    # ema_26 = df["close"].ewm(span=26, adjust=False).mean()
+    # macd = ema_12 - ema_26
+    # df["macd"] = macd
     # # Find peaks and valleys of the MACD line
     # macd_peaks, _ = find_peaks(
     #     macd, prominence=config["macd_prominence"], distance=config["macd_distance"]
@@ -130,20 +130,46 @@ def check_signal(pair, trend):
         -rsi, prominence=config["rsi_prominence"], distance=config["rsi_distance"]
     )
 
-    rsi_point = rsi_peaks if trend == "downtrend" else rsi_valleys
-    last_peak_rsi_index = rsi_point[-1]
-    last_peak_rsi_candle = _candles[last_peak_rsi_index]
+    rsi_point = rsi_valleys if trend == "downtrend" else rsi_peaks
+    # last_peak_rsi_index = rsi_point[-1]
+    # last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
     # check oversold or overbuy
-    if (trend == "downtrend" and rsi[last_peak_rsi_index] > 70) or (
-        trend == "uptrend" and rsi[last_peak_rsi_index] < 30
+    print(
+        pair,
+        rsi[rsi_point[-1]],
+        rsi[rsi_point[-2]],
+        rsi[rsi_point[-3]],
+        rsi_point[-1],
+        rsi_point[-2],
+        rsi_point[-3],
+    )
+    if (
+        trend == "downtrend"
+        and rsi[rsi_point[-1]] < 30
+        and rsi[rsi_point[-2]] < 30
+        and rsi[rsi_point[-3]] < 30
+        and _candles[rsi_point[-1]]["low"]
+        < _candles[rsi_point[-2]]["low"]
+        < _candles[rsi_point[-3]]["low"]
+    ) or (
+        trend == "uptrend"
+        and rsi[rsi_point[-1]] > 70
+        and rsi[rsi_point[-2]] > 70
+        and rsi[rsi_point[-3]] > 70
+        and _candles[rsi_point[-1]]["high"]
+        > _candles[rsi_point[-2]]["high"]
+        > _candles[rsi_point[-3]]["high"]
     ):
+        print(trend, pair)
+        last_peak_rsi_candle = _candles[rsi_point[-1]]
         if (
             "rsi_peak_ctm" not in config
             or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
         ):
             configs.update_one(
-                {"pair": pair}, {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}}
+                {"pair": pair},
+                {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}},
             )
             notify(
                 df=df,
