@@ -20,7 +20,7 @@ db = mongoClient["bot_fx"]
 
 @app.route("/pairs", methods=["GET"])
 def get_pairs():
-    enabled_pairs = db.configs.find({}).sort("created_at", 1)
+    enabled_pairs = db.configs.find({"enabled": True}).sort("created_at", 1)
     res = dumps(list(enabled_pairs))
     return res
 

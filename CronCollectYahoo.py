@@ -87,7 +87,7 @@ def collect(
     data = yf.download(
         tickers=symbol2,
         # start=current_time_utc,
-        period="2d",
+        period="3d",
         interval=interval,
         group_by="ticker",
     )
@@ -99,13 +99,13 @@ def collect(
         del df["adj close"]
         del df["vol"]
         df["timestamp"] = pd.to_datetime(df.index, utc=True)
-        if timeframe == 15:
-            df["timestamp"] = df["timestamp"].apply(lambda x: x - timedelta(hours=1))
+        # if timeframe == 15:
+        #     df["timestamp"] = df["timestamp"].apply(lambda x: x - timedelta(hours=1))
         df["ctm"] = df["timestamp"].apply(lambda x: int(x.timestamp() * 1000))
         print(df)
         histories = db[symbol[i]]
         last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
-        # filter_df = df[df["ctm"] > 1693887300000]
+        # filter_df = df[df["ctm"] > 0]
         filter_df = df[df["ctm"] > last_candle["ctm"] - timeframe * 60000]
         records = filter_df.to_dict("records")
 
