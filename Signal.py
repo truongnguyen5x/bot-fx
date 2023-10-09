@@ -130,49 +130,54 @@ def check_signal(pair, trend):
         -rsi, prominence=config["rsi_prominence"], distance=config["rsi_distance"]
     )
 
-    rsi_point = rsi_valleys if trend == "downtrend" else rsi_peaks
+    if trend == "downtrend":
+        temp_rsi = rsi_peaks
+        rsi_peaks = rsi_valleys
+        rsi_valleys = temp_rsi
+
+    # rsi_point = rsi_valleys if trend == "downtrend" else rsi_peaks
     # last_peak_rsi_index = rsi_point[-1]
     # last_peak_rsi_candle = _candles[last_peak_rsi_index]
 
     # check oversold or overbuy
-
-    if (
-        trend == "downtrend"
-        and rsi[rsi_point[-1]] < 30
-        and rsi[rsi_point[-2]] < 30
-        and rsi[rsi_point[-3]] < 30
-        and _candles[rsi_point[-1]]["low"]
-        < _candles[rsi_point[-2]]["low"]
-        < _candles[rsi_point[-3]]["low"]
-    ) or (
-        trend == "uptrend"
-        and rsi[rsi_point[-1]] > 70
-        and rsi[rsi_point[-2]] > 70
-        and rsi[rsi_point[-3]] > 70
-        and _candles[rsi_point[-1]]["high"]
-        > _candles[rsi_point[-2]]["high"]
-        > _candles[rsi_point[-3]]["high"]
-    ):
-        last_peak_rsi_candle = _candles[rsi_point[-1]]
-        if (
-            "rsi_peak_ctm" not in config
-            or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
-        ):
-            configs.update_one(
-                {"pair": pair},
-                {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}},
-            )
-            notify(
-                df=df,
-                pair=pair,
-                trend=trend,
-                strategy_name="RSI",
-                ctm=last_peak_rsi_candle["ctm"],
-            )
-        else:
-            print(f"{pair} have rsi_peak_ctm")
-    else:
-        print(f"{pair} rsi")
+    print(pair, rsi_peaks, rsi_valleys)
+    # if (
+    #     trend == "downtrend"
+    #     and rsi[rsi_point[-1]] < 30
+    #     and rsi[rsi_point[-2]] < 30
+    #     and rsi[rsi_point[-3]] < 30
+    #     and _candles[rsi_point[-1]]["low"]
+    #     < _candles[rsi_point[-2]]["low"]
+    #     < _candles[rsi_point[-3]]["low"]
+    # ) or (
+    #     trend == "uptrend"
+    #     and rsi[rsi_point[-1]] > 70
+    #     and rsi[rsi_point[-2]] > 70
+    #     and rsi[rsi_point[-3]] > 70
+    #     and _candles[rsi_point[-1]]["high"]
+    #     > _candles[rsi_point[-2]]["high"]
+    #     > _candles[rsi_point[-3]]["high"]
+    # ):
+    #     last_peak_rsi_candle = _candles[rsi_point[-1]]
+    #     if (
+    #         "rsi_peak_ctm" not in config
+    #         or last_peak_rsi_candle["ctm"] > config["rsi_peak_ctm"]
+    #     ):
+    #         configs.update_one(
+    #             {"pair": pair},
+    #             {"$set": {"rsi_peak_ctm": last_peak_rsi_candle["ctm"]}},
+    #         )
+    #         notify(
+    #             df=df,
+    #             pair=pair,
+    #             trend=trend,
+    #             strategy_name="RSI",
+    #             ctm=last_peak_rsi_candle["ctm"],
+    #         )
+    #     else:
+    #         print(f"{pair} have rsi_peak_ctm")
+    # else:
+    #     print(f"{pair} rsi")
 
     # TODO:
     # notify(
@@ -184,13 +189,13 @@ def check_signal(pair, trend):
     # )
 
     # Calculate True Range (TR)
-    df["tr1"] = df["high"] - df["low"]
-    df["tr2"] = abs(df["high"] - df["close"].shift())
-    df["tr3"] = abs(df["low"] - df["close"].shift())
-    df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
-    df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
+    # df["tr1"] = df["high"] - df["low"]
+    # df["tr2"] = abs(df["high"] - df["close"].shift())
+    # df["tr3"] = abs(df["low"] - df["close"].shift())
+    # df["tr"] = df[["tr1", "tr2", "tr3"]].max(axis=1)
+    # df.drop(["tr1", "tr2", "tr3"], axis=1, inplace=True)
     # Calculate ATR
-    df["atr"] = df["tr"].rolling(window=14).mean()
+    # df["atr"] = df["tr"].rolling(window=14).mean()
 
 
 def main():

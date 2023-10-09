@@ -9,7 +9,7 @@ import yfinance as yf
 import argparse
 from datetime import datetime, timedelta, timezone
 import matplotlib.pyplot as plt
-
+import math
 
 load_dotenv()
 
@@ -87,7 +87,7 @@ def collect(
     data = yf.download(
         tickers=symbol2,
         # start=current_time_utc,
-        period="3d",
+        period="2d",
         interval=interval,
         group_by="ticker",
     )
@@ -107,6 +107,7 @@ def collect(
         last_candle = histories.find_one({}, sort=[("ctm", pymongo.DESCENDING)])
         # filter_df = df[df["ctm"] > 0]
         filter_df = df[df["ctm"] > last_candle["ctm"] - timeframe * 60000]
+        filter_df = filter_df[filter_df["open"].notna()]
         records = filter_df.to_dict("records")
 
         if len(records) > 0:
